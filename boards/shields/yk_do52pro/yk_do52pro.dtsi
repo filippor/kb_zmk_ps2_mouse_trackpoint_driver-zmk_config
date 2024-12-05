@@ -5,14 +5,14 @@
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
-#include <physical_layouts.dtsi>
+//#include <physical_layouts.dtsi>
 
 / {
     chosen {
         zephyr,display = &oled;
         zmk,kscan = &kscan0;
         zmk,matrix-transform = &default_transform;
-        keys  //                     w   h    x    y     rot    rx    ry
+/*        keys  //                     w   h    x    y     rot    rx    ry
             = //number 
               <&key_physical_attrs 100 100    0   75       0     0     0>
             , <&key_physical_attrs 100 100  100   50       0     0     0>
@@ -90,9 +90,9 @@
             , <&key_physical_attrs  50  50  875  550       0     0     0>
             , <&key_physical_attrs  50  50  875  500       0     0     0>
             , <&key_physical_attrs  50  50  875  450       0     0     0>
-            , <&key_physical_attrs  50  50 1025  500       0     0     0>
-            
+            , <&key_physical_attrs  50  50 1025  500       0     0     0>          
             ;
+    */
     };
 
     default_transform: keymap_transform_0 {

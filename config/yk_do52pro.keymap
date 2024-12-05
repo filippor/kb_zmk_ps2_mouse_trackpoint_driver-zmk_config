@@ -87,7 +87,7 @@
    &kp LSHFT    &kp Z         &hm RALT X  &kp C       &kp V           &kp B               &kp N           &kp M         &kp COMMA   &hm RALT DOT  &kp FSLH        &kp BSLH
    &lt FUNCTION TAB &kp LGUI                          &lt SYMBOL ESC  &lt NUMBER SPACE    &lt NAVIG BSPC  &lt MEDIA DEL                           &kp LALT        &lt CONFIG RET
                                              // DPAD  Left,     Down,     Middle,   Up,        Right
-                                                      &kp LEFT  &kp DOWN  &kp &studio_unlock   &kp UP &kp RIGHT
+                                                      &kp LEFT  &kp DOWN  &kp TAB   &kp UP &kp RIGHT
                                                       &kp LEFT  &kp DOWN  &kp RET   &kp UP &kp RIGHT
       >;
     };
@@ -170,7 +170,7 @@
     Config_layer {
       display-name = "Configuration";
       bindings = <
-   &none        &to 0       &to 1 &none &none &none           &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &none &studio_unlock
+   &none        &to 0       &to 1 &none &none &none           &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &none &none
    &none        &none       &none &none &none &none           &none        &bt BT_PRV   &bt BT_NXT   &bt BT_DISC  &none &none
    &none        &none       &none &none &none &none           &none        &none        &none        &none        &none &none
    &none        &none       &none &none &none &none           &none        &none        &none        &none        &none &none
