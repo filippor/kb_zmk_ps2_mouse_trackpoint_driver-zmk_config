@@ -508,11 +508,11 @@
         device = <&mouse_ps2>;
         input-processors = 
             <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>
-          , <&zip_temp_layer 7 250>
+          , <&zip_temp_layer 7 50>
             ;
         scroller {
             layers = <8>;
-            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>,<&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 4>,<&zip_xy_to_scroll_mapper>;
+            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>,<&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 8>,<&zip_xy_to_scroll_mapper>;
         };
     };
 
