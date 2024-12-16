@@ -399,7 +399,7 @@
 // This define can be used in the keymap file to check whether the device tree
 // configs in this file are present to void build errors on the side that does
 // not have the mouse or TP
-#define MOUSE_PS2_DT_PRESENT
+//#define MOUSE_PS2_DT_PRESENT
 
 &pinctrl {
 	// This pinctrl state is used for receiving
@@ -438,10 +438,8 @@
 };
 
 
-#ifdef MOUSE_PS2_DRIVER_UART
-
     &uart0 {
-       
+        status = "disabled";
         compatible = "nordic,nrf-uarte";
 
         current-speed = MOUSE_PS2_UART_BAUD_RATE;
@@ -451,71 +449,46 @@
         pinctrl-names = "default", "sleep";
 
         uart_ps2: uart_ps2 {
-          
+            status = "disabled";
             compatible = "uart-ps2";
             scl-gpios = MOUSE_PS2_PIN_SCL_PRO_MICRO;
             sda-gpios = MOUSE_PS2_PIN_SDA_PRO_MICRO;
         };
     };
 
-#else
-
-    / {
-        gpio_ps2: gpio_ps2 {
-            status = "disabled";
-
-            compatible = "gpio-ps2";
-            scl-gpios = MOUSE_PS2_PIN_SCL_PRO_MICRO;
-            sda-gpios = MOUSE_PS2_PIN_SDA_PRO_MICRO;
-        };
-    };
-
-#endif
-
 
 / {
     mouse_ps2: mouse_ps2 {
+        status = "disabled";
         compatible = "zmk,input-mouse-ps2";
-
-#ifdef MOUSE_PS2_DRIVER_UART
+        
 	    ps2-device = <&uart_ps2>;
-#else
-	    ps2-device = <&gpio_ps2>;
-#endif
 
 #ifdef MOUSE_PS2_PIN_RST_PRO_MICRO
         rst-gpios = MOUSE_PS2_PIN_RST_PRO_MICRO;
 #endif
     };
-
-//    mouse_ps2_input_listener: mouse_ps2_input_listener {
-//        compatible = "zmk,input-listener-ps2";
-//        status = "disabled";
-//
-//        device = <&mouse_ps2>;
-//
-//		// Some of the available settings depend on the keymap. So they
-//		// are adjusted in...
-//		// zmk-config/config/includes/mouse_tp.dtsi
-//    };
 };
-#include <input/processors.dtsi>
-#include <dt-bindings/zmk/input_transform.h>
-#include <zephyr/dt-bindings/input/input-event-codes.h>
-/ {
-    trackpoint_listener: trackpoint_listener {
-        compatible = "zmk,input-listener";
-        device = <&mouse_ps2>;
-        input-processors = 
-            <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>
-          , <&zip_temp_layer 7 280>
-            ;
-        scroller {
-            layers = <9>;
-            //process-next;
-            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>,<&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 8>,<&zip_xy_to_scroll_mapper>;
-        };
-    };
+
+&uart0 {
+    status = "okay";
+};
+&uart_ps2 {
+    status = "okay";
+};
+&mouse_ps2 {
+    status = "okay";
+		disable-clicking;
+		tp-sensitivity = <128>;
+		tp-x-invert;
+		tp-y-invert;
+		sampling-rate = <80>;
+};
+
+
+&trackpoint_split{
+    device = <&mouse_ps2>;
+    input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>;
+};
 
     
-};
