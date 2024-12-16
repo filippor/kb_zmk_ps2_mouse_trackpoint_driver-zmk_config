@@ -9,7 +9,7 @@
 # So, you need to define that the central side is the one to which the
 # pointing device is connected to.
 
-if SHIELD_YK_DO52PRO_RIGHT
+if SHIELD_YK_DO52PRO_LEFT
 
 config ZMK_KEYBOARD_NAME
     default "YK DO52Pro"

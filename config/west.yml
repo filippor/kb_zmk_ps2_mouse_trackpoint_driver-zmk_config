@@ -8,6 +8,8 @@ manifest:
       url-base: https://github.com/petejohanson
     - name: urob
       url-base: https://github.com/urob
+    - name: badjeff
+      url-base: https://github.com/badjeff
 
   projects:
 
@@ -59,7 +61,7 @@ manifest:
 
     # Module for PS/2 mouse & TP driver
     - name: kb_zmk_ps2_mouse_trackpoint_driver
-      remote: infused-kim
+      remote: badjeff
       revision: main
 
     - name: zmk-helpers
