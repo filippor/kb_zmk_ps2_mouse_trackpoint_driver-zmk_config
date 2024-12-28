@@ -490,29 +490,12 @@
 #endif
     };
 };
-#include <input/processors.dtsi>
-#include <dt-bindings/zmk/input_transform.h>
-#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "include/mouse_tp.dtsi"
 
-/{
-    trackpoint_listener: trackpoint_listener {
-        compatible = "zmk,input-listener";
-        device = <&mouse_ps2>;
+&trackpoint_split{
+    status="okay";
+    device = <&mouse_ps2>;
         input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>,<&zip_xy_scaler 0 1>;
-        scroller {
-            layers = <10>;
-            //process-next;
-            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>,<&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 8>,<&zip_xy_to_scroll_mapper>;
-        };
-        mouse {
-            layers = <9>;
-            input-processors = 
-                <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP)>
-                //, <&zip_temp_layer 9 500>
-                ;
-        };
-        
-    };
+};
 
     
-};

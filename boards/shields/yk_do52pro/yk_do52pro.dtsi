@@ -46,3 +46,32 @@
 };
 
 
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+/ {
+    split_inputs {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        trackpoint_split: trackpoint_split@0 {
+            compatible = "zmk,input-split";
+            reg = <0>;
+        };
+    };
+
+    trackpoint_listener: trackpoint_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&trackpoint_split>;
+       /* input-processors = <&zip_temp_layer 7 280>;
+        scroller {
+            layers = <9>;
+            //process-next;
+            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 8>,<&zip_xy_to_scroll_mapper>;
+        };
+        */
+    };
+};
+
+
