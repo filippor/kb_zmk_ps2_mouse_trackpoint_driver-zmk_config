@@ -16,3 +16,9 @@
         , <&pro_micro 6 GPIO_ACTIVE_HIGH>
         ;
 };
+
+
+
+&trackpoint_listener {
+    status = "okay";
+};
