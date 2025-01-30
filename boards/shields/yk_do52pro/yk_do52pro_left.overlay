@@ -19,6 +19,7 @@
 
 
 
-&trackpoint_listener {
+// Enable the trackpoint listener for the central left.
+&tpoint_listener {
     status = "okay";
 };

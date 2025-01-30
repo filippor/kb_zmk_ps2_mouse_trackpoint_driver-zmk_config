@@ -46,30 +46,40 @@
 };
 
 
+/*
+*   For ZMK Split Input Peripheral
+*
+*/
 #include <input/processors.dtsi>
-#include <dt-bindings/zmk/input_transform.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
-/ {
-    split_inputs {
-        #address-cells = <1>;
-        #size-cells = <0>;
+#include <dt-bindings/zmk/input_transform.h>
 
-        trackpoint_split: trackpoint_split@0 {
-            compatible = "zmk,input-split";
-            reg = <0>;
-        };
-    };
+/{
+  split_inputs {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    tpoint_split: tpoint_split@0 { compatible = "zmk,input-split"; reg = <0>; };
+  };
+  
+  // We need to add a listener to all the splits,
+  // i.e., for both the central and peripheral(s).
 
-    trackpoint_listener: trackpoint_listener {
+  tpoint_listener: tpoint_listener {
         compatible = "zmk,input-listener";
         status = "disabled";
-        device = <&trackpoint_split>;
-        input-processors = <&zip_temp_layer 7 750>;
+        device = <&tpoint_split>;
+        input-processors = <&zip_xy_scaler 0 1>;
         scroller {
-            layers = <9>;
-            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 16>,<&zip_xy_to_scroll_mapper>;
+            layers = <10>;
+            input-processors = <&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>, <&zip_xy_scaler 1 8>, <&zip_xy_to_scroll_mapper>;
         };
-    };
+        mouse {
+            layers = <9>;
+        //    input-processors = <&zip_xy_scaler 1 1>;
+            
+        };
+
+  };
 };
 
 
