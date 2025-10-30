@@ -64,9 +64,9 @@ manifest:
       remote: badjeff
       revision: main
 
-    - name: zmk-helpers
-      remote: urob
-      revision: v0.2
+    #- name: zmk-helpers
+    #  remote: urob
+    #  revision: v0.2
 
   self:
     path: config
