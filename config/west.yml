@@ -10,6 +10,8 @@ manifest:
       url-base: https://github.com/urob
     - name: badjeff
       url-base: https://github.com/badjeff
+    - name: filippor
+      url-base: https://github.com/filippor
 
   projects:
 
@@ -21,8 +23,8 @@ manifest:
     # Standard, stable zmk repo without mouse PR.
     # Not compatible with the PS/2 mouse & TP driver module.
     - name: zmk
-      remote: zmkfirmware
-      revision: v0.2
+      remote: petejohanson
+      revision: core/move-to-zephyr-4-1
       import: app/west.yml
 
     # infused-kim's zmk fork with mouse PR, which might be a bit outdated, but
@@ -61,8 +63,8 @@ manifest:
 
     # Module for PS/2 mouse & TP driver
     - name: kb_zmk_ps2_mouse_trackpoint_driver
-      remote: badjeff
-      revision: main
+      remote: filippor
+      revision: badjeff-4.1
 
     #- name: zmk-helpers
     #  remote: urob
