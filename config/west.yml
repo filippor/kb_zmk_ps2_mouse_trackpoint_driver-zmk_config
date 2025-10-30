@@ -12,6 +12,8 @@ manifest:
       url-base: https://github.com/badjeff
     - name: filippor
       url-base: https://github.com/filippor
+    - name: nrfconnect
+      url-base: https://github.com/nrfconnect
 
   projects:
 
@@ -69,6 +71,18 @@ manifest:
     #- name: zmk-helpers
     #  remote: urob
     #  revision: v0.2
+    - name: zmk-feature-split-esb
+      remote: badjeff
+      revision: main  
+    - name: sdk-nrf
+      remote: nrfconnect
+      revision: v2.6.4 # zephyr v3.5.99
+      path: nrf
+    - name: nrfxlib
+      remote: nrfconnect
+      revision: v2.6.4
+      repo-path: sdk-nrfxlib
+      path: nrfxlib
 
   self:
     path: config
