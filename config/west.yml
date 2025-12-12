@@ -23,8 +23,8 @@ manifest:
     # Standard, stable zmk repo without mouse PR.
     # Not compatible with the PS/2 mouse & TP driver module.
     - name: zmk
-      remote: petejohanson
-      revision: core/move-to-zephyr-4-1
+      remote: zmkfirmware
+      revision: main
       import: app/west.yml
 
     # infused-kim's zmk fork with mouse PR, which might be a bit outdated, but
