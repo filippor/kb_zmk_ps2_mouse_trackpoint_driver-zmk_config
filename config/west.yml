@@ -12,7 +12,8 @@ manifest:
       url-base: https://github.com/badjeff
     - name: filippor
       url-base: https://github.com/filippor
-
+    - name: nrfconnect
+      url-base: https://github.com/nrfconnect
   projects:
 
     #
@@ -63,12 +64,27 @@ manifest:
 
     # Module for PS/2 mouse & TP driver
     - name: kb_zmk_ps2_mouse_trackpoint_driver
-      remote: filippor
-      revision: badjeff-4.1
+      remote: badjeff
+      revision: main
 
     #- name: zmk-helpers
     #  remote: urob
     #  revision: v0.2
+    - name: zmk-input-processor-report-rate-limit
+      remote: badjeff
+      revision: main
 
+    - name: zmk-feature-split-esb
+      remote: badjeff
+      revision: main
+    - name: sdk-nrf
+      remote: badjeff
+      revision: v3.1-branch+zmk-fixes
+      path: nrf 
+    - name: nrfxlib
+      remote: nrfconnect
+      revision: v3.1-branch
+      repo-path: sdk-nrfxlib
+      path: nrfxlib
   self:
     path: config
