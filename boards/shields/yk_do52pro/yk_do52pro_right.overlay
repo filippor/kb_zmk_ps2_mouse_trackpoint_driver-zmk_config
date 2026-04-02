@@ -522,5 +522,5 @@
 // set the actual trackpoint as the device for the peripheral. 
 &tpoint_split { 
     device = <&mouse_ps2>; 
-    input-processors = <&zip_xy_swap_mapper>,<&zip_report_rate_limit 16>;
+    input-processors = <&zip_xy_swap_mapper>,<&zip_report_rate_limit 24>;
 };
