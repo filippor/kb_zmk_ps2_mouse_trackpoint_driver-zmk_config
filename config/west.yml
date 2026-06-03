@@ -14,6 +14,8 @@ manifest:
       url-base: https://github.com/filippor
     - name: nrfconnect
       url-base: https://github.com/nrfconnect
+    - name: damex
+      url-base: https://github.com/damex
   projects:
 
     #
@@ -76,6 +78,10 @@ manifest:
     - name: zmk-behavior-battery-percentage-printer
       remote: badjeff
       revision: main
+    - name: zmk-feature-split-esb
+      remote: damex
+      revision: v0.1.1
+      import: true
 
    
   self:

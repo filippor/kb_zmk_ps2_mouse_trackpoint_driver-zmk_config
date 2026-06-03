@@ -43,6 +43,13 @@
     };
 
     // TODO: per-key RGB node(s)?
+
+    esb_link: esb_link {
+        compatible = "zmk,split-esb";
+        base-address = [E7 E7 E7 E7];
+        prefix = <0xC2>;
+        rf-channel = <4>;
+    };
 };
 
 // #if (defined(CONFIG_SHIELD_YK_DO52PRO_LEFT) && defined(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) ) || (defined(CONFIG_SHIELD_YK_DO52PRO_RIGHT) && !defined(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) )
