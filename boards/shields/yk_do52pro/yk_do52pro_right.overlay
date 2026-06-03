@@ -23,13 +23,41 @@
         ;
 };
 
+
+// #if defined(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 #include "include/mouse_ps2_right.dtsi"
 
 #include <input/processors/report_rate_limit.dtsi>
 
-// We have the trackpoint on the right peripheral split, so
-// set the actual trackpoint as the device for the peripheral. 
-&tpoint_split { 
-    device = <&mouse_ps2>; 
-    input-processors = <&zip_xy_swap_mapper>,<&zip_report_rate_limit 24>;
+/{
+trackpoint_listener: trackpoint_listener {
+        compatible = "zmk,input-listener";
+        device = <&mouse_ps2>;
+        input-processors = <&zip_xy_swap_mapper>,<&zip_report_rate_limit 24>,<&zip_xy_scaler 0 1>;
+        scroller {
+            layers = <10>;
+            //process-next;
+            input-processors = <&zip_xy_swap_mapper>,<&zip_report_rate_limit 24>,<&zip_xy_transform (INPUT_TRANSFORM_Y_INVERT)>,<&zip_xy_scaler 1 8>,<&zip_xy_to_scroll_mapper>;
+        };
+        mouse {
+            layers = <9>;
+            input-processors = 
+                <&zip_xy_swap_mapper>,<&zip_report_rate_limit 24>
+                //, <&zip_temp_layer 9 500>
+                ;
+        };
 };
+};
+// #else
+// // We have the trackpoint on the right peripheral split, so
+// // set the actual trackpoint as the device for the peripheral. 
+// &tpoint_split { 
+//     device = <&mouse_ps2>; 
+//     input-processors = <&zip_xy_swap_mapper>,<&zip_report_rate_limit 24>;
+// };
+
+// #endif
+

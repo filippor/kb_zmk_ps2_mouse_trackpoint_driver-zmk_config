@@ -17,7 +17,9 @@
         ;
 };
 
-// Enable the trackpoint listener for the central left.
-&tpoint_listener {
-    status = "okay";
-};
+// // Enable the trackpoint listener only when this side is the central split.
+// #if defined(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+// &tpoint_listener {
+//     status = "okay";
+// };
+// #endif
