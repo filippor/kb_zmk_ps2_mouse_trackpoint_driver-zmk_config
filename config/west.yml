@@ -63,7 +63,10 @@ manifest:
     #
     # Additional zmk modules
     #
-
+    - name: zmk-feature-split-esb
+      remote: damex
+      revision: main
+      import: west.yml
     # Module for PS/2 mouse & TP driver
     - name: kb_zmk_ps2_mouse_trackpoint_driver
       remote: badjeff
@@ -78,10 +81,7 @@ manifest:
     - name: zmk-behavior-battery-percentage-printer
       remote: badjeff
       revision: main
-    - name: zmk-feature-split-esb
-      remote: damex
-      revision: v0.1.1
-      import: true
+    
 
    
   self:
