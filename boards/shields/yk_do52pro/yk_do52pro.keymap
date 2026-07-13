@@ -15,6 +15,8 @@
 #include <dt-bindings/zmk/outputs.h>
 
 #include <behaviors/battery_percentage_printer.dtsi>
+#include <behaviors/socd.dtsi>
+#include <dt-bindings/zmk/dynamic-macros.h>
 
 
 /*
@@ -120,16 +122,36 @@
             #binding-cells = <2>;
             bindings = <&mo>, <&kp>;
             hold-trigger-on-release;             // delay positional check until key-release
-        };       
+        };         
+    
+        socdh: socdh {
+            compatible = "zmk,behavior-socd";
+            #binding-cells = <1>;
+            bindings = <&kp>;
+        };
+        socdv: socdv {
+            compatible = "zmk,behavior-socd";
+            #binding-cells = <1>;
+            bindings = <&kp>;
+        };   
   };
+  macros {
+        dm: dm {
+            compatible = "zmk,behavior-dynamic-macro";
+            #binding-cells = <1>;
+        };
+        dmf: dmf {
+            compatible = "zmk,behavior-dynamic-macro";
+            #binding-cells = <1>;
+            wait-ms = <20>;
+        };
+   };
 
 
-
-
-  //0
+  
   keymap {
     compatible = "zmk,keymap";
-   
+//0
     Base_layer {
       display-name = "Base";
       bindings = <
@@ -150,8 +172,8 @@
       bindings = <
 //|-----------------|-------------|-----------|------------|-----------------|----------------|--------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &kp GRAVE         &kp N1        &kp N2      &kp N3       &kp N4            &kp N5                                              &kp N6          &kp N7        &kp N8       &kp N9          &kp N0          &kp MINUS
-   &kp LBKT          &kp Q         &kp W       &kp E        &kp R             &kp T                                               &kp Y           &kp U         &kp I        &kp O           &kp P           &kp EQUAL
-   &kp RBKT          &kp A         &kp S       &kp D        &kp F             &kp G                                               &kp H           &kp J         &kp K        &kp L           &kp SEMI        &kp SQT
+   &kp LBKT          &kp Q         &socdv W    &kp E        &kp R             &kp T                                               &kp Y           &kp U         &kp I        &kp O           &kp P           &kp EQUAL
+   &kp RBKT          &socdh A      &socdv S    &socdh D     &kp F             &kp G                                               &kp H           &kp J         &kp K        &kp L           &kp SEMI        &kp SQT
    &kp LSHFT         &kp Z         &kp X       &kp C        &kp V             &kp B                                               &kp N           &kp M         &kp COMMA    &kp DOT         &kp FSLH        &kp BSLH
    &kp LCTRL         &kp LMETA                              &kp ESC           &kp TAB          &kp SPACE           &kp BSPC       &kp DEL         &kp RET                                    &to BASE        &kp RALT
                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
@@ -171,7 +193,7 @@
    &kp LCTRL         &kp DEL                                &kp ESC           &kp TAB          &kp SPACE           &mkp LCLK      &mkp MCLK       &mkp RCLK                                  &to BASE        &kp RET
                                                                             // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &kp HOME  &kp PG_DN  &kp INS     &kp PG_UP  &kp END       //left
-                                                                                    &kp LEFT  &kp DOWN   &kp PSCRN   &kp UP     &kp RIGHT     //right                                                     
+                                                                                    &kp LEFT  &kp DOWN   &kp RET   &kp UP     &kp RIGHT     //right                                                     
       >;
     };
 //3
@@ -182,8 +204,8 @@
    &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
    &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &trans                                              &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &trans
    &trans       &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &trans          &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
-   &trans       &kp PRSC      &kp SLCK    &kp PAUS    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
-   &trans       &trans                                &caps_word      &kp LBKT        &kp RBKT            &trans          &trans          &trans                                  &trans          &trans 
+   &dmf PLAY    &kp PRSC      &kp SLCK    &kp PAUS    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
+   &dm PLAY     &trans                                &caps_word      &kp LBKT        &kp RBKT            &trans          &trans          &trans                                  &trans          &trans 
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -196,9 +218,9 @@
 //|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-------------|-------------|---------------|------------|
    &kp F12      &kp F1        &kp F2      &kp F3      &kp F4          &kp F5                                              &kp F6          &kp F7        &kp F8        &kp F9        &kp F10         &kp F11         
    &trans       &kp LBRC      &kp LBKT    &kp RBKT    &kp RBRC        &kp LPAR                                            &kp GRAVE       &kp NUMBER_7  &kp NUMBER_8  &kp NUMBER_9  &kp MINUS       &kp F12
-   &trans       &kp LMETA     &kp LALT    &kp LCTRL   &kp LSHIFT      &kp RPAR                                            &kp EQUAL       &kp NUMBER_4  &kp NUMBER_5  &kp NUMBER_6  &kp SQT         &trans
-   &trans       &trans        &kp RALT    &trans      &trans          &trans                                              &kp NUMBER_0    &kp NUMBER_1  &kp NUMBER_2  &kp NUMBER_3  &kp BSLH        &trans
-   &trans       &trans                                &trans          &trans          &trans               &trans         &trans          &trans                                 &trans          &trans 
+   &tog GAME_M  &kp LMETA     &kp LALT    &kp LCTRL   &kp LSHIFT      &kp RPAR                                            &kp EQUAL       &kp NUMBER_4  &kp NUMBER_5  &kp NUMBER_6  &kp SQT         &tog GAME_M
+   &tog GAME    &trans        &kp RALT    &trans      &trans          &trans                                              &kp NUMBER_0    &kp NUMBER_1  &kp NUMBER_2  &kp NUMBER_3  &kp BSLH        &tog GAME
+   &to BASE     &trans                                &trans          &trans          &trans               &trans         &trans          &trans                                    &trans          &to BASE
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -212,9 +234,9 @@
 //|--------------|-------------|-----------|-----------|--------kks-------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &studio_unlock &kp F1        &kp F2      &kp F3      &kp F4          &kp F5                                              &kp F6          &kp F7        &kp F8        &kp F9        &kp F10         &kp F11
    &trans         &trans        &kp RALT    &trans      &trans          &trans                                              &kp TILDE       &kp AMPERSAND &kp STAR      &kp LPAR      &kp PLUS        &kp F12
-   &tog GAME_M    &kp LMETA     &kp LALT    &kp LCTRL   &kp LSHIFT      &trans                                              &kp LBRC        &kp DOLLAR    &kp PERCENT   &kp CARET     &kp DQT         &trans
-   &tog GAME      &trans        &kp RALT    &trans      &trans          &trans                                              &kp RBRC        &kp EXCL      &kp AT        &kp HASH      &kp PIPE        &trans
-   &to BASE       &trans                                &trans          &trans          &trans              &kp LPAR        &kp RPAR        &kp UNDER                                 &trans          &trans 
+   &tog GAME_M    &kp LMETA     &kp LALT    &kp LCTRL   &kp LSHIFT      &trans                                              &kp LBRC        &kp DOLLAR    &kp PERCENT   &kp CARET     &kp DQT         &tog GAME_M
+   &tog GAME      &trans        &kp RALT    &trans      &trans          &trans                                              &kp RBRC        &kp EXCL      &kp AT        &kp HASH      &kp PIPE        &tog GAME
+   &to BASE       &trans                                &trans          &trans             &trans              &kp LPAR     &kp RPAR        &kp UNDER                                 &trans          &to BASE
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -227,9 +249,9 @@
 //|--------------|-------------|-------------|-------------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &studio_unlock &trans        &trans        &trans        &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
    &trans         &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KMLT        &kp KP_N7     &kp KP_N8   &kp KP_N9     &kp KMIN        &trans
-   &tog GAME_M    &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KDIV        &kp KP_N4     &kp KP_N5   &kp KP_N6     &kp KPLS        &trans
-   &tog GAME      &trans        &trans        &trans        &trans          &trans                                              &kp KP_N0       &kp KP_N1     &kp KP_N2   &kp KP_N3     &kp KP_DOT      &trans
-   &to BASE       &trans                                    &trans          &trans          &trans             &trans         &trans          &trans                                  &trans          &trans
+   &trans         &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KDIV        &kp KP_N4     &kp KP_N5   &kp KP_N6     &kp KPLS        &trans
+   &dmf RECORD       &trans        &trans        &trans        &trans          &trans                                              &kp KP_N0       &kp KP_N1     &kp KP_N2   &kp KP_N3     &kp KP_DOT      &trans
+   &dm RECORD     &trans                                    &trans          &trans          &trans               &trans         &trans          &trans                                  &trans          &trans
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -243,9 +265,9 @@
       bindings = <
 //|-----------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &studio_unlock    &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
-   &bapp             &trans        &trans      &trans      &trans          &trans                                              &trans          &kp F7        &kp F8      &kp F9        &kp F10         &bapp
-   &trans            &trans        &trans      &trans      &trans          &trans                                              &trans          &kp F4        &kp F5      &kp F6        &kp F11         &trans
-   &bootloader       &trans        &trans      &trans      &trans          &trans                                              &trans          &kp F1        &kp F2      &kp F3        &kp F12         &trans
+   &bapp             &trans        &trans      &trans      &trans          &trans                                              &kp F12         &kp F7        &kp F8      &kp F9        &kp F10         &bapp
+   &trans            &trans        &trans      &trans      &trans          &trans                                              &kp F11         &kp F4        &kp F5      &kp F6        &kp F11         &trans
+   &bootloader       &trans        &trans      &trans      &trans          &trans                                              &kp F10         &kp F1        &kp F2      &kp F3        &kp F12         &bootloader
    &trans            &trans                                &trans          &trans          &trans              &trans          &trans          &trans                                  &trans          &trans 
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left

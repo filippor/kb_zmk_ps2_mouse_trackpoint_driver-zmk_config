@@ -14,6 +14,8 @@ manifest:
       url-base: https://github.com/filippor
     - name: nrfconnect
       url-base: https://github.com/nrfconnect
+    - name: nguyendown
+      url-base: https://github.com/nguyendown
   projects:
 
     #
@@ -75,6 +77,10 @@ manifest:
       revision: main
     - name: zmk-behavior-battery-percentage-printer
       remote: badjeff
+      revision: main
+    
+    - name: zmk-behavior-socd
+      remote: nguyendown
       revision: main
 
    
