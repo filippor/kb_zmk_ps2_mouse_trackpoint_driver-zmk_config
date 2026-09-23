@@ -14,9 +14,9 @@
 #include <dt-bindings/zmk/ext_power.h>
 #include <dt-bindings/zmk/outputs.h>
 
-#include <behaviors/battery_percentage_printer.dtsi>
+//#include <behaviors/battery_percentage_printer.dtsi>
 #include <behaviors/socd.dtsi>
-#include <dt-bindings/zmk/dynamic-macros.h>
+//#include <dt-bindings/zmk/dynamic-macros.h>
 
 
 /*
@@ -84,7 +84,14 @@
 #define FLAVOUR "balanced"
 // Disable line-wrap in your editor to see a "visualization" of the key layouts
 / {
-
+   combos {
+        compatible = "zmk,combos";
+        combo_esc {
+            timeout-ms = <50>;
+            key-positions = <13 14>; // Cambia questi numeri in base alla tua tastiera (es. D e F)
+            bindings = <&kp ESC>;
+        };
+    };
   
   behaviors {
        /* left-hand HRMs */
@@ -122,7 +129,17 @@
             #binding-cells = <2>;
             bindings = <&mo>, <&kp>;
             hold-trigger-on-release;             // delay positional check until key-release
-        };         
+        };
+        tl_e: thumb_layer_esc {
+            compatible = "zmk,behavior-hold-tap";
+             flavor = "hold-preferred";
+            tapping-term-ms = <TAPPING_TERM_MS>;
+            quick-tap-ms = <QUICK_TAP_MS>;                // repeat on tap-into-hold
+            require-prior-idle-ms = <PRIOR_IDLE_MS>;
+            #binding-cells = <2>;
+            bindings = <&mo>, <&long_tap>;
+            hold-trigger-on-release;             // delay positional check until key-release
+        };              
     
         socdh: socdh {
             compatible = "zmk,behavior-socd";
@@ -136,6 +153,12 @@
         };   
   };
   macros {
+        long_tap: long_tap {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
+            tap-ms = <80>;
+            bindings = <&macro_param_1to1>, <&kp MACRO_PLACEHOLDER>;
+        };
         dm: dm {
             compatible = "zmk,behavior-dynamic-macro";
             #binding-cells = <1>;
@@ -203,9 +226,9 @@
 //|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
    &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &trans                                              &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &trans
-   &trans       &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &trans          &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
-   &dmf PLAY    &kp PRSC      &kp SLCK    &kp PAUS    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
-   &dm PLAY     &trans                                &caps_word      &kp LBKT        &kp RBKT            &trans          &trans          &trans                                  &trans          &trans 
+   &tog GAME_M  &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &trans          &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
+   &tog GAME    &kp PRSC      &kp SLCK    &kp PAUS    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
+   &to BASE     &trans                                &caps_word      &kp LBKT        &kp RBKT            &trans          &trans          &trans                                  &trans          &trans 
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -250,8 +273,8 @@
    &studio_unlock &trans        &trans        &trans        &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
    &trans         &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KMLT        &kp KP_N7     &kp KP_N8   &kp KP_N9     &kp KMIN        &trans
    &trans         &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KDIV        &kp KP_N4     &kp KP_N5   &kp KP_N6     &kp KPLS        &trans
-   &dmf RECORD       &trans        &trans        &trans        &trans          &trans                                              &kp KP_N0       &kp KP_N1     &kp KP_N2   &kp KP_N3     &kp KP_DOT      &trans
-   &dm RECORD     &trans                                    &trans          &trans          &trans               &trans         &trans          &trans                                  &trans          &trans
+   &trans         &trans        &trans        &trans        &trans          &trans                                              &kp KP_N0       &kp KP_N1     &kp KP_N2   &kp KP_N3     &kp KP_DOT      &trans
+   &trans         &trans                                    &trans          &trans          &trans               &trans         &trans          &trans                                  &trans          &trans
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -265,7 +288,7 @@
       bindings = <
 //|-----------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &studio_unlock    &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
-   &bapp             &trans        &trans      &trans      &trans          &trans                                              &kp F12         &kp F7        &kp F8      &kp F9        &kp F10         &bapp
+   &trans            &trans        &trans      &trans      &trans          &trans                                              &kp F12         &kp F7        &kp F8      &kp F9        &kp F10         &trans
    &trans            &trans        &trans      &trans      &trans          &trans                                              &kp F11         &kp F4        &kp F5      &kp F6        &kp F11         &trans
    &bootloader       &trans        &trans      &trans      &trans          &trans                                              &kp F10         &kp F1        &kp F2      &kp F3        &kp F12         &bootloader
    &trans            &trans                                &trans          &trans          &trans              &trans          &trans          &trans                                  &trans          &trans 
@@ -280,7 +303,7 @@
       bindings = <
 //|---------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-------------|-------------|---------------|------------|
    &studio_unlock  &trans        &trans      &trans      &trans          &trans                                              &bt BT_SEL 0    &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4    &bt BT_SEL 5
-   &bapp           &trans        &trans      &trans      &trans          &trans                                              &bt BT_CLR      &bt BT_PRV    &out OUT_USB  &out OUT_BLE  &bt BT_NXT      &bapp
+   &trans          &trans        &trans      &trans      &trans          &trans                                              &bt BT_CLR      &bt BT_PRV    &out OUT_USB  &out OUT_BLE  &bt BT_NXT      &trans
    &sys_reset      &trans        &trans      &trans      &trans          &trans                                              &bt BT_CLR_ALL  &out OUT_TOG  &trans        &trans        &trans          &sys_reset
    &bootloader     &trans        &trans      &trans      &trans          &trans                                              &bt BT_DISC 0   &bt BT_DISC 1 &bt BT_DISC 2 &bt BT_DISC 3 &bt BT_DISC 4   &bootloader
    &trans          &trans                                &trans          &trans          &trans              &trans          &trans          &trans                                    &trans          &trans 

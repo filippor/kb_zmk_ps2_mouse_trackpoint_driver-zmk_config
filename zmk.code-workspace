@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../zmk"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../zmk-modules"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.overlay": "dts",
+			"*.keymap": "dts"
+		}
+	}
+}
