@@ -14,9 +14,9 @@
 #include <dt-bindings/zmk/ext_power.h>
 #include <dt-bindings/zmk/outputs.h>
 
-//#include <behaviors/battery_percentage_printer.dtsi>
+#include <behaviors/battery_percentage_printer.dtsi>
 #include <behaviors/socd.dtsi>
-//#include <dt-bindings/zmk/dynamic-macros.h>
+#include <dt-bindings/zmk/dynamic_macros.h>
 
 
 /*
@@ -88,8 +88,13 @@
         compatible = "zmk,combos";
         combo_esc {
             timeout-ms = <50>;
-            key-positions = <13 14>; // Cambia questi numeri in base alla tua tastiera (es. D e F)
+            key-positions = <25 26>; // A and S
             bindings = <&kp ESC>;
+        };
+         combo_ret {
+            timeout-ms = <50>;
+            key-positions = <33 34>; // L and ;
+            bindings = <&kp RET>;
         };
     };
   
@@ -185,8 +190,8 @@
    &kp LSHFT         &kp Z         &hml RALT X &kp C        &kp V             &kp B                                                &kp N           &kp M         &kp COMMA    &hmr RALT DOT   &tl MOUSE FSLH  &kp BSLH
    &kp LCTRL         &kp LALT                               &tl FUNCTION ESC  &tl NAVIG TAB    &tl NUMBER SPACE    &tl NAVIG BSPC  &tl MEDIA DEL   &tl CONFIG RET                              &kp LMETA       &kp LALT
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
-                                                                                    &kp HOME  &kp PG_DN  &kp INS     &kp PG_UP  &kp END       //left
-                                                                                    &kp LEFT  &kp DOWN   &kp PSCRN   &kp UP     &kp RIGHT     //right                                                     
+                                                                                    &kp LEFT  &kp DOWN   &kp INS     &kp UP     &kp RIGHT     //left                                                     
+                                                                                    &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
       >;
     };
 //1
@@ -200,8 +205,8 @@
    &kp LSHFT         &kp Z         &kp X       &kp C        &kp V             &kp B                                               &kp N           &kp M         &kp COMMA    &kp DOT         &kp FSLH        &kp BSLH
    &kp LCTRL         &kp LMETA                              &kp ESC           &kp TAB          &kp SPACE           &kp BSPC       &kp DEL         &kp RET                                    &to BASE        &kp RALT
                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
-                                                                                    &kp HOME  &kp PG_DN  &kp INS     &kp PG_UP  &kp END       //left
-                                                                                    &kp LEFT  &kp DOWN   &kp PSCRN   &kp UP     &kp RIGHT     //right                                                     
+                                                                                    &kp LEFT  &kp DOWN   &kp INS     &kp UP     &kp RIGHT     //left                                                     
+                                                                                    &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
       >;
     };
 //2
@@ -214,9 +219,9 @@
    &kp RBKT          &kp A         &kp S       &kp D        &kp F             &kp G                                               &kp H           &kp J         &kp K        &kp L           &kp SEMI        &kp SQT
    &kp LSHFT         &kp Z         &kp X       &kp C        &kp V             &kp B                                               &kp N           &kp M         &kp COMMA    &kp DOT         &kp FSLH        &kp BSLH
    &kp LCTRL         &kp DEL                                &kp ESC           &kp TAB          &kp SPACE           &mkp LCLK      &mkp MCLK       &mkp RCLK                                  &to BASE        &kp RET
-                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
-                                                                                    &kp HOME  &kp PG_DN  &kp INS     &kp PG_UP  &kp END       //left
-                                                                                    &kp LEFT  &kp DOWN   &kp RET   &kp UP     &kp RIGHT     //right                                                     
+                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
+                                                                                    &kp LEFT  &kp DOWN   &kp INS     &kp UP     &kp RIGHT     //left                                                     
+                                                                                    &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
       >;
     };
 //3
@@ -225,10 +230,10 @@
          bindings = <
 //|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
-   &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &trans                                              &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &trans
+   &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &kp INS                                             &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &trans
    &tog GAME_M  &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &trans          &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
    &tog GAME    &kp PRSC      &kp SLCK    &kp PAUS    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
-   &to BASE     &trans                                &caps_word      &kp LBKT        &kp RBKT            &trans          &trans          &trans                                  &trans          &trans 
+   &dmf RECORD  &dmf PLAY                             &caps_word      &kp LPAR        &kp RPAR            &trans          &trans          &trans                                  &trans          &trans 
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -271,10 +276,10 @@
          bindings = <
 //|--------------|-------------|-------------|-------------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &studio_unlock &trans        &trans        &trans        &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
-   &trans         &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KMLT        &kp KP_N7     &kp KP_N8   &kp KP_N9     &kp KMIN        &trans
-   &trans         &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KDIV        &kp KP_N4     &kp KP_N5   &kp KP_N6     &kp KPLS        &trans
-   &trans         &trans        &trans        &trans        &trans          &trans                                              &kp KP_N0       &kp KP_N1     &kp KP_N2   &kp KP_N3     &kp KP_DOT      &trans
-   &trans         &trans                                    &trans          &trans          &trans               &trans         &trans          &trans                                  &trans          &trans
+   &bapp          &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KMLT        &kp KP_N7     &kp KP_N8   &kp KP_N9     &kp KMIN        &bapp 
+   &tog GAME_M    &kp C_BRI_DEC &kp C_VOL_DN  &kp C_VOL_UP  &kp C_BRI_INC   &trans                                              &kp KDIV        &kp KP_N4     &kp KP_N5   &kp KP_N6     &kp KPLS        &trans
+   &tog GAME      &trans        &trans        &trans        &trans          &trans                                              &kp KP_N0       &kp KP_N1     &kp KP_N2   &kp KP_N3     &kp KP_DOT      &trans
+   &dm RECORD     &dm PLAY                                  &trans          &kp LBRC        &kp RBRC            &trans          &trans          &trans                                  &trans          &trans
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
@@ -288,7 +293,7 @@
       bindings = <
 //|-----------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &studio_unlock    &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
-   &trans            &trans        &trans      &trans      &trans          &trans                                              &kp F12         &kp F7        &kp F8      &kp F9        &kp F10         &trans
+   &bapp             &trans        &trans      &trans      &trans          &trans                                              &kp F12         &kp F7        &kp F8      &kp F9        &kp F10         &bapp
    &trans            &trans        &trans      &trans      &trans          &trans                                              &kp F11         &kp F4        &kp F5      &kp F6        &kp F11         &trans
    &bootloader       &trans        &trans      &trans      &trans          &trans                                              &kp F10         &kp F1        &kp F2      &kp F3        &kp F12         &bootloader
    &trans            &trans                                &trans          &trans          &trans              &trans          &trans          &trans                                  &trans          &trans 
@@ -306,7 +311,7 @@
    &trans          &trans        &trans      &trans      &trans          &trans                                              &bt BT_CLR      &bt BT_PRV    &out OUT_USB  &out OUT_BLE  &bt BT_NXT      &trans
    &sys_reset      &trans        &trans      &trans      &trans          &trans                                              &bt BT_CLR_ALL  &out OUT_TOG  &trans        &trans        &trans          &sys_reset
    &bootloader     &trans        &trans      &trans      &trans          &trans                                              &bt BT_DISC 0   &bt BT_DISC 1 &bt BT_DISC 2 &bt BT_DISC 3 &bt BT_DISC 4   &bootloader
-   &trans          &trans                                &trans          &trans          &trans              &trans          &trans          &trans                                    &trans          &trans 
+   &trans          &trans                                &trans          &kp LBKT        &kp RBKT            &trans          &trans          &trans                                    &trans          &trans 
                                                                              // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
