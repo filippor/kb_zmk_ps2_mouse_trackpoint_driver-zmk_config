@@ -6,23 +6,36 @@
 #include <zmk/battery.h>
 #include <zmk/display.h>
 #include <zmk/display/status_screen.h>
-#include <zmk/display/widgets/layer_status.h>
-#include <zmk/display/widgets/output_status.h>
+#include <zmk/endpoints.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/battery_state_changed.h>
+#include <zmk/events/endpoint_changed.h>
 #include <zmk/events/keycode_state_changed.h>
+#include <zmk/events/layer_state_changed.h>
 #include <zmk/events/position_state_changed.h>
+#include <zmk/keymap.h>
 #include <zmk/split/central.h>
+
+#if IS_ENABLED(CONFIG_ZMK_BLE)
+#include <zephyr/bluetooth/conn.h>
+#include <zmk/ble.h>
+#include <zmk/events/ble_active_profile_changed.h>
+#endif
+
+#if IS_ENABLED(CONFIG_ZMK_USB)
+#include <zmk/usb.h>
+#include <zmk/events/usb_conn_state_changed.h>
+#endif
 
 #if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
 #include <zmk/hid_indicators.h>
 #include <zmk/events/hid_indicators_changed.h>
 #endif
 
-static struct zmk_widget_output_status output_status_widget;
-static struct zmk_widget_layer_status layer_status_widget;
+static lv_obj_t *outputs_label;
 static lv_obj_t *battery_label;
 static lv_obj_t *caps_label;
+static lv_obj_t *layer_label;
 
 struct batteries_state {
     uint8_t left;
@@ -123,26 +136,121 @@ ZMK_SUBSCRIPTION(widget_caps, zmk_keycode_state_changed);
 ZMK_SUBSCRIPTION(widget_caps, zmk_hid_indicators_changed);
 #endif
 
+/* ---- Outputs: "USB" when USB is the output in use, then every BLE profile:
+ *      [n] = active profile, n* = connected, n = paired only, - = empty ---- */
+
+static void outputs_update_work_cb(struct k_work *work) {
+    if (!outputs_label) {
+        return;
+    }
+
+    char text[48] = "";
+    size_t len = 0;
+
+    if (zmk_endpoint_get_selected().transport == ZMK_TRANSPORT_USB) {
+        len += snprintf(text + len, sizeof(text) - len, "USB ");
+    }
+
+#if IS_ENABLED(CONFIG_ZMK_BLE)
+    int active = zmk_ble_active_profile_index();
+
+    for (int i = 0; i < ZMK_BLE_PROFILE_COUNT && len < sizeof(text); i++) {
+        char cell[4] = "-";
+
+        if (!zmk_ble_profile_is_open(i)) {
+            snprintf(cell, sizeof(cell), "%d%s", i + 1, zmk_ble_profile_is_connected(i) ? "*" : "");
+        }
+        len += snprintf(text + len, sizeof(text) - len, i == active ? "[%s] " : "%s ", cell);
+    }
+#endif
+
+    lv_label_set_text(outputs_label, text);
+}
+
+static K_WORK_DELAYABLE_DEFINE(outputs_update_work, outputs_update_work_cb);
+
+static void outputs_refresh(void) {
+    if (zmk_display_is_initialized()) {
+        k_work_reschedule_for_queue(zmk_display_work_q(), &outputs_update_work, K_MSEC(50));
+    }
+}
+
+static int outputs_listener_cb(const zmk_event_t *eh) {
+    outputs_refresh();
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(widget_outputs, outputs_listener_cb);
+ZMK_SUBSCRIPTION(widget_outputs, zmk_endpoint_changed);
+#if IS_ENABLED(CONFIG_ZMK_USB)
+ZMK_SUBSCRIPTION(widget_outputs, zmk_usb_conn_state_changed);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_BLE)
+ZMK_SUBSCRIPTION(widget_outputs, zmk_ble_active_profile_changed);
+
+// Non-active profiles connect/disconnect without any ZMK event
+static void outputs_connected(struct bt_conn *conn, uint8_t err) { outputs_refresh(); }
+static void outputs_disconnected(struct bt_conn *conn, uint8_t reason) { outputs_refresh(); }
+
+BT_CONN_CB_DEFINE(outputs_conn_callbacks) = {
+    .connected = outputs_connected,
+    .disconnected = outputs_disconnected,
+};
+#endif
+
+/* ---- Layer name (no icon) ---- */
+
+static void layer_update_work_cb(struct k_work *work) {
+    if (!layer_label) {
+        return;
+    }
+
+    zmk_keymap_layer_index_t index = zmk_keymap_highest_layer_active();
+    const char *name = zmk_keymap_layer_name(zmk_keymap_layer_index_to_id(index));
+
+    if (name && *name) {
+        lv_label_set_text(layer_label, name);
+    } else {
+        lv_label_set_text_fmt(layer_label, "Layer %d", index);
+    }
+}
+
+static K_WORK_DEFINE(layer_update_work, layer_update_work_cb);
+
+static int layer_listener_cb(const zmk_event_t *eh) {
+    if (zmk_display_is_initialized()) {
+        k_work_submit_to_queue(zmk_display_work_q(), &layer_update_work);
+    }
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(widget_layer, layer_listener_cb);
+ZMK_SUBSCRIPTION(widget_layer, zmk_layer_state_changed);
+
+/* ---- Screen: 3 rows on 128x32 ---- */
+
 lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_t *screen = lv_obj_create(NULL);
-    const lv_font_t *small = lv_theme_get_font_small(screen);
 
-    zmk_widget_output_status_init(&output_status_widget, screen);
-    lv_obj_align(zmk_widget_output_status_obj(&output_status_widget), LV_ALIGN_TOP_LEFT, 0, 0);
+    outputs_label = lv_label_create(screen);
+    lv_obj_set_style_text_font(outputs_label, &lv_font_montserrat_10, LV_PART_MAIN);
+    lv_obj_align(outputs_label, LV_ALIGN_TOP_LEFT, 0, 0);
+    outputs_update_work_cb(NULL);
 
     battery_label = lv_label_create(screen);
-    lv_obj_align(battery_label, LV_ALIGN_TOP_RIGHT, 0, 0);
+    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_10, LV_PART_MAIN);
+    lv_obj_align(battery_label, LV_ALIGN_TOP_LEFT, 0, 11);
     widget_batteries_init();
 
-    zmk_widget_layer_status_init(&layer_status_widget, screen);
-    lv_obj_set_style_text_font(zmk_widget_layer_status_obj(&layer_status_widget), small,
-                               LV_PART_MAIN);
-    lv_obj_align(zmk_widget_layer_status_obj(&layer_status_widget), LV_ALIGN_BOTTOM_LEFT, 0, 0);
-
     caps_label = lv_label_create(screen);
-    lv_obj_set_style_text_font(caps_label, small, LV_PART_MAIN);
-    lv_obj_align(caps_label, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_set_style_text_font(caps_label, &lv_font_montserrat_10, LV_PART_MAIN);
+    lv_obj_align(caps_label, LV_ALIGN_TOP_RIGHT, 0, 11);
     lv_label_set_text(caps_label, "");
+
+    layer_label = lv_label_create(screen);
+    lv_obj_set_style_text_font(layer_label, &lv_font_montserrat_8, LV_PART_MAIN);
+    lv_obj_align(layer_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    layer_update_work_cb(NULL);
 
     return screen;
 }
