@@ -1,0 +1,56 @@
+cmake:
+  application:
+    configuration-dir: /workspaces/zmk-config/test/oled_test
+    source-dir: /workspaces/zmk-config/test/oled_test
+  board:
+    name: nice_nano
+    path:
+     - /workspaces/zmk/app/module/boards/nicekeyboards/nice_nano
+    qualifiers: nrf52840
+    revision: 2.0.0
+  devicetree:
+    bindings-dirs:
+     - /workspaces/zmk/zephyr/dts/bindings
+    files:
+     - /workspaces/zmk/app/module/boards/nicekeyboards/nice_nano/nice_nano.dts
+     - /workspaces/zmk-config/test/oled_test/app.overlay
+    include-dirs:
+     - /workspaces/zmk/modules/hal/stm32/dts
+     - /workspaces/zmk/modules/hal/atmel/include
+     - /workspaces/zmk/modules/hal/gigadevice/include
+     - /workspaces/zmk/modules/hal/nuvoton/dts
+     - /workspaces/zmk/zephyr/include
+     - /workspaces/zmk/zephyr/include/zephyr
+     - /workspaces/zmk/zephyr/dts/common
+     - /workspaces/zmk/zephyr/dts/x86
+     - /workspaces/zmk/zephyr/dts/xtensa
+     - /workspaces/zmk/zephyr/dts/sparc
+     - /workspaces/zmk/zephyr/dts/riscv
+     - /workspaces/zmk/zephyr/dts/posix
+     - /workspaces/zmk/zephyr/dts/nios2
+     - /workspaces/zmk/zephyr/dts/arm64
+     - /workspaces/zmk/zephyr/dts/arm
+     - /workspaces/zmk/zephyr/dts/arc
+     - /workspaces/zmk/zephyr/dts
+    user-files:
+     - /workspaces/zmk-config/test/oled_test/app.overlay
+  kconfig:
+    files:
+     - /workspaces/zmk/app/module/boards/nicekeyboards/nice_nano/nice_nano_2_0_0_defconfig
+     - /workspaces/zmk-config/test/oled_test/prj.conf
+    user-files:
+     - /workspaces/zmk-config/test/oled_test/prj.conf
+  toolchain:
+    name: zephyr
+    path: /opt/zephyr-sdk-0.16.9
+  vendor-specific:
+    nordic:
+      svdfile: /workspaces/zmk/modules/hal/nordic/nrfx/mdk/nrf52840.svd
+  zephyr:
+    version: 4.1.0
+    zephyr-base: /workspaces/zmk/zephyr
+version: 0.1.0
+west:
+  command: /usr/local/bin/west build -p -b nice_nano/nrf52840 -d build .
+  topdir: /workspaces/zmk
+  version: 1.5.0
