@@ -1,11 +1,12 @@
 /*
- * Custom 128x32 status screen for yk_do52pro.
+ * Custom status screen for yk_do52pro, on a 32x128 portrait canvas (see
+ * display_rotate.h).
  *
- * Row 1: active layer                      | left/right battery
- * Row 2: USB + BLE profile connection block | caps lock / caps word
+ *   battery left / battery right / USB + BT1 / BT2 + BT3 / BT4 + BT5 /
+ *   caps lock / caps word / layer
  *
- * Every field is fixed width and every connection cell has a fixed x, so
- * nothing shifts around as the state changes.
+ * Every field is fixed width and sits at a fixed position, so nothing shifts
+ * around as the state changes.
  */
 
 #include <zephyr/kernel.h>
@@ -52,21 +53,31 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/keycode_state_changed.h>
 #include <zmk/events/position_state_changed.h>
 
-#define ROW_1_Y 0
-#define ROW_2_Y 17
+#include "display_rotate.h"
 
-// x where the caps indicator starts, so it never shifts with its own width.
-#define CAPS_X 98
+#define BATT_L_Y 1
+#define BATT_R_Y 15
+#define RULE_CONN_Y 30
+#define CONN_ROW_Y(row) (34 + (row) * 13)
+#define RULE_STATUS_Y 75
+#define STATUS_ROW_Y(row) (79 + (row) * 11)
+#define RULE_LAYER_Y 104
+#define LAYER_Y 108
 
 #define CONN_CELLS (1 + ZMK_BLE_PROFILE_COUNT)
 
-static const lv_coord_t conn_cell_x[] = {0, 16, 32, 48, 64, 80};
-BUILD_ASSERT(ARRAY_SIZE(conn_cell_x) == CONN_CELLS);
+// Two columns per row, plus the narrow L/R gutter on the battery rows.
+#define COL_W (CANVAS_W / 2)
+#define BATT_PREFIX_W 6
 
-static lv_obj_t *battery_label;
+static lv_obj_t *battery_l_label;
+static lv_obj_t *battery_r_label;
 static lv_obj_t *conn_labels[CONN_CELLS];
 static lv_obj_t *layer_label;
-static lv_obj_t *caps_label;
+static lv_obj_t *num_lock_label;
+static lv_obj_t *caps_lock_label;
+static lv_obj_t *scroll_lock_label;
+static lv_obj_t *caps_word_label;
 
 // LVGL returns NULL when its pool is exhausted; faulting here would kill USB too.
 #define SET_TEXT(label, text)                                                                      \
@@ -92,10 +103,11 @@ struct battery_state {
 };
 
 static void battery_update_cb(struct battery_state state) {
+    SET_TEXT_FMT(battery_l_label, "%3u%%", state.central);
     if (state.peripheral_valid) {
-        SET_TEXT_FMT(battery_label, "%3u %3u", state.central, state.peripheral);
+        SET_TEXT_FMT(battery_r_label, "%3u%%", state.peripheral);
     } else {
-        SET_TEXT_FMT(battery_label, "%3u  --", state.central);
+        SET_TEXT(battery_r_label, "  --");
     }
 }
 
@@ -133,41 +145,57 @@ struct output_state {
     bool profile_open[ZMK_BLE_PROFILE_COUNT];
     bool profile_connected[ZMK_BLE_PROFILE_COUNT];
     enum zmk_transport selected_transport;
+    enum zmk_transport preferred_transport;
 #if IS_ENABLED(CONFIG_ZMK_USB)
     enum zmk_usb_conn_state usb_state;
 #endif
 };
 
+// Increasing visual weight: unused < paired < connected < selected.
+#define SYM_UNUSED ' '
+#define SYM_PAIRED 'o'
+#define SYM_CONNECTED '*'
+#define SYM_SELECTED '#'
+#define SYM_SELECTED_UNUSED '-'
+#define SYM_SELECTED_PAIRED 'O'
+
 static void output_update_cb(struct output_state state) {
-    // Each cell is "<U|profile><status>": '<' selected, '*' connected, '.' paired, '-' unused.
 #if IS_ENABLED(CONFIG_ZMK_USB)
     char usb_status;
     if (state.selected_transport == ZMK_TRANSPORT_USB) {
-        usb_status = '<';
+        usb_status = SYM_SELECTED;
+    } else if (state.preferred_transport == ZMK_TRANSPORT_USB) {
+        usb_status = state.usb_state == ZMK_USB_CONN_NONE ? SYM_SELECTED_UNUSED
+                                                         : SYM_SELECTED_PAIRED;
     } else {
         switch (state.usb_state) {
         case ZMK_USB_CONN_HID:
-            usb_status = '*';
+            usb_status = SYM_CONNECTED;
             break;
         case ZMK_USB_CONN_POWERED:
-            usb_status = '.';
+            usb_status = SYM_PAIRED;
             break;
         default:
-            usb_status = '-';
+            usb_status = SYM_UNUSED;
             break;
         }
     }
     SET_TEXT_FMT(conn_labels[0], "U%c", usb_status);
 #else
-    SET_TEXT(conn_labels[0], "U-");
+    SET_TEXT_FMT(conn_labels[0], "U%c", SYM_UNUSED);
 #endif
 
     for (uint8_t i = 0; i < ZMK_BLE_PROFILE_COUNT; i++) {
         char status;
         if (state.selected_transport == ZMK_TRANSPORT_BLE && state.active_profile == i) {
-            status = '<';
+            status = SYM_SELECTED;
+        } else if (state.preferred_transport == ZMK_TRANSPORT_BLE &&
+                   state.active_profile == i) {
+            status = state.profile_open[i] ? SYM_SELECTED_UNUSED : SYM_SELECTED_PAIRED;
+        } else if (state.profile_connected[i]) {
+            status = SYM_CONNECTED;
         } else {
-            status = state.profile_connected[i] ? '*' : (state.profile_open[i] ? '-' : '.');
+            status = state.profile_open[i] ? SYM_UNUSED : SYM_PAIRED;
         }
         SET_TEXT_FMT(conn_labels[i + 1], "%u%c", i + 1, status);
     }
@@ -177,6 +205,7 @@ static struct output_state output_get_state(const zmk_event_t *eh) {
     struct output_state state = {
         .active_profile = zmk_ble_active_profile_index(),
         .selected_transport = zmk_endpoint_get_selected().transport,
+        .preferred_transport = zmk_endpoint_get_preferred_transport(),
 #if IS_ENABLED(CONFIG_ZMK_USB)
         .usb_state = zmk_usb_get_conn_state(),
 #endif
@@ -207,11 +236,9 @@ struct layer_state {
     const char *name;
 };
 
-#define LAYER_NAME_MAX 6
-
 static void layer_update_cb(struct layer_state state) {
     if (state.name && state.name[0] != '\0') {
-        SET_TEXT_FMT(layer_label, "%.*s", LAYER_NAME_MAX, state.name);
+        SET_TEXT(layer_label, state.name);
     } else {
         SET_TEXT_FMT(layer_label, "L%u", state.index);
     }
@@ -228,11 +255,13 @@ static struct layer_state layer_get_state(const zmk_event_t *eh) {
 ZMK_DISPLAY_WIDGET_LISTENER(widget_layer, struct layer_state, layer_update_cb, layer_get_state)
 ZMK_SUBSCRIPTION(widget_layer, zmk_layer_state_changed);
 
-/* ---------------------------------------------------- caps word / caps lock */
+/* ------------------------------------------------- lock states / caps word */
 
 struct caps_state {
     bool caps_word;
     bool caps_lock;
+    bool num_lock;
+    bool scroll_lock;
 };
 
 static bool caps_word_is_active(void) {
@@ -250,24 +279,23 @@ static bool caps_word_is_active(void) {
 }
 
 static void caps_update_cb(struct caps_state state) {
-    if (state.caps_lock && state.caps_word) {
-        SET_TEXT(caps_label, "CA CW");
-    } else if (state.caps_lock) {
-        SET_TEXT(caps_label, "CAPS");
-    } else if (state.caps_word) {
-        SET_TEXT(caps_label, "CW");
-    } else {
-        SET_TEXT(caps_label, "");
-    }
+    SET_TEXT(num_lock_label, state.num_lock ? "BN" : "");
+    SET_TEXT(caps_lock_label, state.caps_lock ? "CL" : "");
+    SET_TEXT(scroll_lock_label, state.scroll_lock ? "SL" : "");
+    SET_TEXT(caps_word_label, state.caps_word ? "CW" : "");
 }
 
 static struct caps_state caps_get_state(const zmk_event_t *eh) {
+#if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
+    const zmk_hid_indicators_t indicators = zmk_hid_indicators_get_current_profile();
+#endif
+
     return (struct caps_state){
         .caps_word = caps_word_is_active(),
 #if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
-        .caps_lock = (zmk_hid_indicators_get_current_profile() & HID_INDICATOR_CAPS_LOCK) != 0,
-#else
-        .caps_lock = false,
+        .caps_lock = (indicators & HID_INDICATOR_CAPS_LOCK) != 0,
+        .num_lock = (indicators & HID_INDICATOR_NUM_LOCK) != 0,
+        .scroll_lock = (indicators & HID_INDICATOR_SCROLL_LOCK) != 0,
 #endif
     };
 }
@@ -281,8 +309,9 @@ ZMK_SUBSCRIPTION(widget_caps, zmk_hid_indicators_changed);
 
 /* ------------------------------------------------------------------- screen */
 
-static lv_obj_t *make_label(lv_obj_t *screen, const lv_font_t *font, lv_align_t align, lv_coord_t x,
-                            lv_coord_t y) {
+// Fixed box per field, so a label's contents never drift with its own width.
+static lv_obj_t *make_label(lv_obj_t *screen, const lv_font_t *font, lv_coord_t x, lv_coord_t y,
+                            lv_coord_t w, lv_text_align_t text_align) {
     lv_obj_t *label = lv_label_create(screen);
     if (!label) {
         LOG_ERR("Failed to allocate status screen label");
@@ -290,12 +319,34 @@ static lv_obj_t *make_label(lv_obj_t *screen, const lv_font_t *font, lv_align_t 
     }
 
     lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
+    lv_obj_set_style_text_align(label, text_align, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(label, 0, LV_PART_MAIN);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
     lv_label_set_text(label, "");
-    lv_obj_align(label, align, x, y);
+    lv_obj_set_width(label, w);
+    lv_obj_set_pos(label, x, y);
     return label;
 }
 
+static lv_obj_t *make_rule(lv_obj_t *screen, lv_coord_t y) {
+    lv_obj_t *rule = lv_obj_create(screen);
+    if (!rule) {
+        LOG_ERR("Failed to allocate status screen rule");
+        return NULL;
+    }
+
+    lv_obj_remove_style_all(rule);
+    lv_obj_set_size(rule, CANVAS_W, 1);
+    lv_obj_set_style_bg_opa(rule, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(rule, lv_obj_get_style_text_color(screen, LV_PART_MAIN),
+                              LV_PART_MAIN);
+    lv_obj_align(rule, LV_ALIGN_TOP_LEFT, 0, y);
+    return rule;
+}
+
 lv_obj_t *zmk_display_status_screen(void) {
+    zmk_display_rotate_init();
+
     lv_obj_t *screen = lv_obj_create(NULL);
 
     // The mono theme puts a 1px border and padding on every object, including the screen.
@@ -305,15 +356,44 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
     lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
-    layer_label = make_label(screen, &lv_font_montserrat_14, LV_ALIGN_TOP_LEFT, 0, ROW_1_Y);
-    battery_label = make_label(screen, &lv_font_montserrat_14, LV_ALIGN_TOP_RIGHT, 0, ROW_1_Y);
+    lv_obj_t *prefix;
+
+    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_L_Y, BATT_PREFIX_W,
+                        LV_TEXT_ALIGN_LEFT);
+    SET_TEXT(prefix, "L");
+    battery_l_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_L_Y,
+                                 CANVAS_W - BATT_PREFIX_W, LV_TEXT_ALIGN_RIGHT);
+
+    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_R_Y, BATT_PREFIX_W,
+                        LV_TEXT_ALIGN_LEFT);
+    SET_TEXT(prefix, "R");
+    battery_r_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_R_Y,
+                                 CANVAS_W - BATT_PREFIX_W, LV_TEXT_ALIGN_RIGHT);
+
+    make_rule(screen, RULE_CONN_Y);
 
     for (size_t i = 0; i < CONN_CELLS; i++) {
-        conn_labels[i] =
-            make_label(screen, &lv_font_montserrat_14, LV_ALIGN_TOP_LEFT, conn_cell_x[i], ROW_2_Y);
+        const bool right = (i % 2) != 0;
+        conn_labels[i] = make_label(screen, &lv_font_montserrat_10, right ? COL_W : 0,
+                                    CONN_ROW_Y(i / 2), COL_W,
+                                    right ? LV_TEXT_ALIGN_RIGHT : LV_TEXT_ALIGN_LEFT);
     }
 
-    caps_label = make_label(screen, &lv_font_montserrat_8, LV_ALIGN_TOP_LEFT, CAPS_X, ROW_2_Y);
+    make_rule(screen, RULE_STATUS_Y);
+
+    num_lock_label =
+        make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_LEFT);
+    caps_lock_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W,
+                                 LV_TEXT_ALIGN_RIGHT);
+    scroll_lock_label =
+        make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(1), COL_W, LV_TEXT_ALIGN_LEFT);
+    caps_word_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(1), COL_W,
+                                 LV_TEXT_ALIGN_RIGHT);
+
+    make_rule(screen, RULE_LAYER_Y);
+
+    layer_label =
+        make_label(screen, &lv_font_montserrat_10, 0, LAYER_Y, CANVAS_W, LV_TEXT_ALIGN_LEFT);
 
     widget_batteries_init();
 #if IS_ENABLED(CONFIG_ZMK_BLE)

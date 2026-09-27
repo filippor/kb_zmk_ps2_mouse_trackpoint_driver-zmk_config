@@ -1,0 +1,4 @@
+west:
+  command: /usr/local/bin/west build -d build
+  topdir: /workspaces/zmk
+  version: 1.5.0
