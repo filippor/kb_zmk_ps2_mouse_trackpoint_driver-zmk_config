@@ -186,9 +186,9 @@
 //|-----------------|-------------|-----------|------------|-----------------|----------------|---------------|   |---------------|---------------|-------------|------------|---------------|---------------|-------------|
    &kp GRAVE         &kp N1        &kp N2      &kp N3       &kp N4            &kp N5                                               &kp N6          &kp N7        &kp N8       &kp N9          &kp N0          &kp MINUS
    &kp LBKT          &kp Q         &hml RALT W &kp E        &kp R             &kp T                                                &kp Y           &kp U         &kp I        &hmr RALT O     &kp P           &kp EQUAL
-   &kp RBKT          &hml LMETA A  &hml LALT S &hml LCTRL D &hml LSHIFT F     &kp G                                                &kp H           &hmr RSHIFT J &hmr RCTRL K &hmr LALT L     &hmr LMETA SEMI &kp SQT
+   &kp RBKT          &hml LMETA A  &hml LALT S &hml LCTRL D &hml LSHIFT F     &hml RALT G                                          &hml RALT H     &hmr RSHIFT J &hmr RCTRL K &hmr LALT L     &hmr LMETA SEMI &kp SQT
    &kp LSHFT         &kp Z         &hml RALT X &kp C        &kp V             &kp B                                                &kp N           &kp M         &kp COMMA    &hmr RALT DOT   &tl MOUSE FSLH  &kp BSLH
-   &kp LCTRL         &kp LALT                               &tl FUNCTION ESC  &tl NAVIG TAB    &tl NUMBER SPACE    &tl NAVIG BSPC  &tl MEDIA DEL   &tl CONFIG RET                              &kp LMETA       &kp LALT
+   &kp LCTRL         &kp LALT                               &tl FUNCTION ESC  &tl NAVIG TAB    &tl NUMBER SPACE    &tl NAVIG BSPC  &tl MEDIA DEL   &tl CONFIG RET                             &kp LMETA       &kp RALT
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &kp LEFT  &kp DOWN   &kp INS     &kp UP     &kp RIGHT     //left                                                     
                                                                                     &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
@@ -203,7 +203,7 @@
    &kp LBKT          &kp Q         &socdv W    &kp E        &kp R             &kp T                                               &kp Y           &kp U         &kp I        &kp O           &kp P           &kp EQUAL
    &kp RBKT          &socdh A      &socdv S    &socdh D     &kp F             &kp G                                               &kp H           &kp J         &kp K        &kp L           &kp SEMI        &kp SQT
    &kp LSHFT         &kp Z         &kp X       &kp C        &kp V             &kp B                                               &kp N           &kp M         &kp COMMA    &kp DOT         &kp FSLH        &kp BSLH
-   &kp LCTRL         &kp LMETA                              &kp ESC           &kp TAB          &kp SPACE           &kp BSPC       &kp DEL         &kp RET                                    &to BASE        &kp RALT
+   &kp LCTRL         &kp LALT                              &kp ESC           &kp TAB          &kp SPACE           &kp BSPC       &kp DEL         &kp RET                                     &to BASE        &kp RALT
                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &kp LEFT  &kp DOWN   &kp INS     &kp UP     &kp RIGHT     //left                                                     
                                                                                     &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
@@ -215,13 +215,13 @@
       bindings = <
 //|-----------------|-------------|-----------|------------|-----------------|----------------|--------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &kp GRAVE         &kp N1        &kp N2      &kp N3       &kp N4            &kp N5                                              &kp N6          &kp N7        &kp N8       &kp N9          &kp N0          &kp MINUS
-   &kp LBKT          &kp Q         &kp W       &kp E        &kp R             &kp T                                               &kp Y           &kp U         &kp I        &kp O           &kp P           &kp EQUAL
-   &kp RBKT          &kp A         &kp S       &kp D        &kp F             &kp G                                               &kp H           &kp J         &kp K        &kp L           &kp SEMI        &kp SQT
+   &kp LBKT          &kp Q         &socdv W    &kp E        &kp R             &kp T                                               &kp Y           &kp U         &kp I        &kp O           &kp P           &kp EQUAL
+   &kp RBKT          &socdh A      &socdv S    &socdh D     &kp F             &kp G                                               &kp H           &kp J         &kp K        &kp L           &kp SEMI        &kp SQT
    &kp LSHFT         &kp Z         &kp X       &kp C        &kp V             &kp B                                               &kp N           &kp M         &kp COMMA    &kp DOT         &kp FSLH        &kp BSLH
    &kp LCTRL         &kp DEL                                &kp ESC           &kp TAB          &kp SPACE           &mkp LCLK      &mkp MCLK       &mkp RCLK                                  &to BASE        &kp RET
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
-                                                                                    &kp LEFT  &kp DOWN   &kp INS     &kp UP     &kp RIGHT     //left                                                     
-                                                                                    &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
+                                                                                    &kp LEFT  &kp DOWN   &kp BSPC    &kp UP     &kp RIGHT     //left                                                     
+                                                                                    &kp HOME  &kp PG_DN  &kp INS     &kp PG_UP  &kp END       //right
       >;
     };
 //3
@@ -231,7 +231,7 @@
 //|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
    &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
    &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &kp INS                                             &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &trans
-   &tog GAME_M  &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &trans          &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
+   &tog GAME_M  &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &kp RALT        &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
    &tog GAME    &kp PRSC      &kp PAUS    &kp SLCK    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
    &dmf RECORD  &dmf PLAY                             &caps_word      &kp LPAR        &kp RPAR            &trans          &trans          &trans                                  &trans          &trans 
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right

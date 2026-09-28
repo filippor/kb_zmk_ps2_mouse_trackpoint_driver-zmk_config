@@ -19,6 +19,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/display.h>
 #include <zmk/display/status_screen.h>
 #include <zmk/event_manager.h>
+#include <zmk/hid.h>
 
 #include <zmk/battery.h>
 #include <zmk/events/battery_state_changed.h>
@@ -67,12 +68,12 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define LAYER_Y 1
 #define RULE_LAYER_Y 14
 #define STATUS_ROW_Y(row) (17 + (row) * 11)
-#define RULE_STATUS_Y 41
-#define STATUS_DIVIDER_H (RULE_STATUS_Y - STATUS_ROW_Y(0))
-#define CONN_ROW_Y(row) (46 + (row) * 13)
-#define RULE_BATT_Y 85
-#define BATT_L_Y 89
-#define BATT_R_Y 103
+#define RULE_STATUS_Y 48
+#define STATUS_DIVIDER_H (STATUS_ROW_Y(1) - STATUS_ROW_Y(0) + 10)
+#define CONN_ROW_Y(row) (RULE_STATUS_Y + 3 + (row) * 13)
+#define RULE_BATT_Y 89
+#define BATT_L_Y 92
+#define BATT_R_Y (BATT_L_Y + 11)
 
 #define CONN_CELLS (1 + ZMK_BLE_PROFILE_COUNT)
 
@@ -88,6 +89,11 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define MACRO_ICON_W 17
 #define MACRO_ICON_H 10
 #define STATUS_DIVIDER_W CANVAS_W
+#define MODIFIER_ICON_W CANVAS_W
+#define MODIFIER_ICON_H 5
+#define MODIFIER_ICON_Y 40
+#define MODIFIER_SQUARE_SIZE 5
+#define MODIFIER_SQUARE_GAP 1
 
 static lv_obj_t *battery_l_label;
 static lv_obj_t *battery_r_label;
@@ -107,6 +113,9 @@ static LV_ATTRIBUTE_MEM_ALIGN uint8_t macro_icon_buffer[LV_DRAW_BUF_SIZE(
 static lv_obj_t *status_divider_icon;
 static LV_ATTRIBUTE_MEM_ALIGN uint8_t status_divider_buffer[LV_DRAW_BUF_SIZE(
     STATUS_DIVIDER_W, STATUS_DIVIDER_H, LV_COLOR_FORMAT_I1)];
+static lv_obj_t *modifier_icon;
+static LV_ATTRIBUTE_MEM_ALIGN uint8_t modifier_icon_buffer[LV_DRAW_BUF_SIZE(
+    MODIFIER_ICON_W, MODIFIER_ICON_H, LV_COLOR_FORMAT_I1)];
 static lv_obj_t *caps_word_label;
 
 // LVGL returns NULL when its pool is exhausted; faulting here would kill USB too.
@@ -196,6 +205,40 @@ static void draw_status_cross(lv_obj_t *screen) {
     }
 
     lv_obj_set_pos(status_divider_icon, 0, STATUS_ROW_Y(0));
+}
+
+static void set_modifier_icon(zmk_mod_flags_t modifiers) {
+    if (!modifier_icon) {
+        return;
+    }
+
+    lv_draw_buf_t *buffer = lv_canvas_get_draw_buf(modifier_icon);
+    memset(lv_draw_buf_goto_xy(buffer, 0, 0), 0, buffer->header.stride * MODIFIER_ICON_H);
+
+    const zmk_mod_flags_t modifier_masks[] = {
+        MOD_LGUI | MOD_RGUI,
+        MOD_RALT,
+        MOD_LALT,
+        MOD_LCTL | MOD_RCTL,
+        MOD_LSFT | MOD_RSFT,
+    };
+    const int total_width = 5 * MODIFIER_SQUARE_SIZE + 4 * MODIFIER_SQUARE_GAP;
+    const int start_x = (MODIFIER_ICON_W - total_width) / 2;
+
+    for (size_t i = 0; i < ARRAY_SIZE(modifier_masks); i++) {
+        const bool pressed = (modifiers & modifier_masks[i]) != 0;
+        const int x0 = start_x + i * (MODIFIER_SQUARE_SIZE + MODIFIER_SQUARE_GAP);
+        for (int y = 0; y < MODIFIER_SQUARE_SIZE; y++) {
+            for (int x = 0; x < MODIFIER_SQUARE_SIZE; x++) {
+                if (pressed || x == 0 || x == MODIFIER_SQUARE_SIZE - 1 || y == 0 ||
+                    y == MODIFIER_SQUARE_SIZE - 1) {
+                    draw_icon_pixel(buffer, x0 + x, y);
+                }
+            }
+        }
+    }
+
+    lv_obj_invalidate(modifier_icon);
 }
 
 #if IS_ENABLED(CONFIG_ZMK_BLE)
@@ -295,6 +338,10 @@ struct layer_state {
 };
 
 static void layer_update_cb(struct layer_state state) {
+    bool invert = state.name &&
+                  (strcmp(state.name, "Game") == 0 || strcmp(state.name, "GaMe") == 0);
+    zmk_display_rotate_set_inverted(invert);
+
     if (state.name && state.name[0] != '\0') {
         SET_TEXT(layer_label, state.name);
     } else {
@@ -320,6 +367,7 @@ struct caps_state {
     bool caps_lock;
     bool num_lock;
     bool scroll_lock;
+    zmk_mod_flags_t modifiers;
 };
 
 static bool caps_word_is_active(void) {
@@ -340,6 +388,7 @@ static void caps_update_cb(struct caps_state state) {
     SET_TEXT(num_lock_label, state.num_lock ? "BN" : "");
     SET_TEXT(caps_lock_label, state.caps_lock ? "CL" : "");
     SET_TEXT(caps_word_label, state.caps_word ? "CW" : "");
+    set_modifier_icon(state.modifiers);
 }
 
 static struct caps_state caps_get_state(const zmk_event_t *eh) {
@@ -349,6 +398,7 @@ static struct caps_state caps_get_state(const zmk_event_t *eh) {
 
     return (struct caps_state){
         .caps_word = caps_word_is_active(),
+        .modifiers = zmk_hid_get_explicit_mods(),
 #if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
         .caps_lock = (indicators & HID_INDICATOR_CAPS_LOCK) != 0,
         .num_lock = (indicators & HID_INDICATOR_NUM_LOCK) != 0,
@@ -519,6 +569,17 @@ lv_obj_t *zmk_display_status_screen(void) {
     battery_r_unit_label = make_label(screen, &lv_font_montserrat_8, BATT_UNIT_X, BATT_R_Y,
                                       BATT_UNIT_W, LV_TEXT_ALIGN_LEFT);
     SET_TEXT(battery_r_unit_label, "%");
+
+    modifier_icon = lv_canvas_create(screen);
+    if (modifier_icon) {
+        lv_canvas_set_buffer(modifier_icon, modifier_icon_buffer, MODIFIER_ICON_W, MODIFIER_ICON_H,
+                             LV_COLOR_FORMAT_I1);
+        lv_canvas_set_palette(modifier_icon, 0, lv_color32_make(0, 0, 0, 0));
+        lv_canvas_set_palette(modifier_icon, 1,
+                              lv_color_to_32(lv_obj_get_style_text_color(screen, LV_PART_MAIN),
+                                             LV_OPA_COVER));
+        lv_obj_set_pos(modifier_icon, 0, MODIFIER_ICON_Y);
+    }
 
     widget_batteries_init();
 #if IS_ENABLED(CONFIG_ZMK_BLE)

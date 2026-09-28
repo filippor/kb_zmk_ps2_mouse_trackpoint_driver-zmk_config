@@ -29,6 +29,7 @@ static uint8_t canvas_buf[PALETTE_SIZE + CANVAS_STRIDE * CANVAS_H]
 static uint8_t panel_buf[PANEL_W * PANEL_H / 8];
 
 static bool set_bit_lights_pixel = true;
+static bool screen_inverted;
 
 static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
     ARG_UNUSED(area);
@@ -42,7 +43,8 @@ static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
         const int32_t panel_x = PANEL_W - 1 - cy;
 
         for (int32_t cx = 0; cx < CANVAS_W; cx++) {
-            if (!((row[cx / 8] >> (7 - (cx % 8))) & 1)) {
+            bool pixel_lit = ((row[cx / 8] >> (7 - (cx % 8))) & 1) != 0;
+            if (!(pixel_lit ^ screen_inverted)) {
                 continue;
             }
 
@@ -65,6 +67,15 @@ static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 
     display_write(panel, 0, 0, &desc, panel_buf);
     lv_display_flush_ready(disp);
+}
+
+void zmk_display_rotate_set_inverted(bool inverted) {
+    if (screen_inverted == inverted) {
+        return;
+    }
+
+    screen_inverted = inverted;
+    lv_obj_invalidate(lv_screen_active());
 }
 
 void zmk_display_rotate_init(void) {

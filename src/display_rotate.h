@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #define PANEL_W 128
 #define PANEL_H 32
 
@@ -12,3 +14,5 @@
  * rotated onto the landscape panel on flush. Call before creating any widgets.
  */
 void zmk_display_rotate_init(void);
+
+void zmk_display_rotate_set_inverted(bool inverted);
