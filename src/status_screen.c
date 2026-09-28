@@ -2,8 +2,8 @@
  * Custom status screen for yk_do52pro, on a 32x128 portrait canvas (see
  * display_rotate.h).
  *
- *   battery left / battery right / USB + BT1 / BT2 + BT3 / BT4 + BT5 /
- *   caps lock / caps word / layer
+ *   layer / num lock + caps lock / macro + caps word /
+ *   USB + BT1 / BT2 + BT3 / BT4 + BT5 / battery left / battery right
  *
  * Every field is fixed width and sits at a fixed position, so nothing shifts
  * around as the state changes.
@@ -63,23 +63,27 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include "display_rotate.h"
 
-#define BATT_L_Y 1
-#define BATT_R_Y 15
-#define RULE_CONN_Y 30
-#define CONN_ROW_Y(row) (34 + (row) * 13)
-#define RULE_STATUS_Y 75
-#define STATUS_ROW_Y(row) (79 + (row) * 11)
-#define RULE_LAYER_Y 104
-#define LAYER_Y 108
+#define LAYER_Y 1
+#define RULE_STATUS_Y 15
+#define STATUS_ROW_Y(row) (19 + (row) * 11)
+#define RULE_CONN_Y 41
+#define CONN_ROW_Y(row) (45 + (row) * 13)
+#define RULE_BATT_Y 84
+#define BATT_L_Y 88
+#define BATT_R_Y 102
 
 #define CONN_CELLS (1 + ZMK_BLE_PROFILE_COUNT)
 
 // Two columns per row, plus the narrow L/R gutter on the battery rows.
 #define COL_W (CANVAS_W / 2)
 #define BATT_PREFIX_W 6
+#define BATT_PERCENT_W 5
+#define BATT_VALUE_W (CANVAS_W - BATT_PREFIX_W - BATT_PERCENT_W)
 
 static lv_obj_t *battery_l_label;
 static lv_obj_t *battery_r_label;
+static lv_obj_t *battery_l_percent_label;
+static lv_obj_t *battery_r_percent_label;
 static lv_obj_t *conn_labels[CONN_CELLS];
 static lv_obj_t *layer_label;
 static lv_obj_t *num_lock_label;
@@ -111,11 +115,17 @@ struct battery_state {
 };
 
 static void battery_update_cb(struct battery_state state) {
-    SET_TEXT_FMT(battery_l_label, "%3u%%", state.central);
+    SET_TEXT_FMT(battery_l_label, "%3u", state.central);
     if (state.peripheral_valid) {
-        SET_TEXT_FMT(battery_r_label, "%3u%%", state.peripheral);
+        SET_TEXT_FMT(battery_r_label, "%3u", state.peripheral);
+        if (battery_r_percent_label) {
+            lv_obj_clear_flag(battery_r_percent_label, LV_OBJ_FLAG_HIDDEN);
+        }
     } else {
-        SET_TEXT(battery_r_label, "  --");
+        SET_TEXT(battery_r_label, " --");
+        if (battery_r_percent_label) {
+            lv_obj_add_flag(battery_r_percent_label, LV_OBJ_FLAG_HIDDEN);
+        }
     }
 }
 
@@ -395,17 +405,15 @@ lv_obj_t *zmk_display_status_screen(void) {
 
     lv_obj_t *prefix;
 
-    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_L_Y, BATT_PREFIX_W,
-                        LV_TEXT_ALIGN_LEFT);
-    SET_TEXT(prefix, "L");
-    battery_l_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_L_Y,
-                                 CANVAS_W - BATT_PREFIX_W, LV_TEXT_ALIGN_RIGHT);
+    layer_label = make_label(screen, &lv_font_montserrat_10, 0, LAYER_Y, CANVAS_W,
+                             LV_TEXT_ALIGN_LEFT);
 
-    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_R_Y, BATT_PREFIX_W,
-                        LV_TEXT_ALIGN_LEFT);
-    SET_TEXT(prefix, "R");
-    battery_r_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_R_Y,
-                                 CANVAS_W - BATT_PREFIX_W, LV_TEXT_ALIGN_RIGHT);
+    make_rule(screen, RULE_STATUS_Y);
+
+    caps_lock_label       = make_label(screen, &lv_font_montserrat_8, 0    , STATUS_ROW_Y(0), COL_W        , LV_TEXT_ALIGN_LEFT);
+    caps_word_label       = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W        , LV_TEXT_ALIGN_RIGHT);
+    macro_recording_label = make_label(screen, &lv_font_montserrat_8, 0    , STATUS_ROW_Y(1), 17           , LV_TEXT_ALIGN_LEFT);
+    num_lock_label        = make_label(screen, &lv_font_montserrat_8, 17   , STATUS_ROW_Y(1), CANVAS_W - 17, LV_TEXT_ALIGN_RIGHT);
 
     make_rule(screen, RULE_CONN_Y);
 
@@ -416,21 +424,30 @@ lv_obj_t *zmk_display_status_screen(void) {
                                     right ? LV_TEXT_ALIGN_RIGHT : LV_TEXT_ALIGN_LEFT);
     }
 
-    make_rule(screen, RULE_STATUS_Y);
+    make_rule(screen, RULE_BATT_Y);
 
-    num_lock_label =
-        make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_LEFT);
-    caps_lock_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W,
-                                 LV_TEXT_ALIGN_RIGHT);
-    macro_recording_label =
-        make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(1), 17, LV_TEXT_ALIGN_LEFT);
-    caps_word_label = make_label(screen, &lv_font_montserrat_8, 17, STATUS_ROW_Y(1), CANVAS_W - 17,
-                                 LV_TEXT_ALIGN_RIGHT);
+    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_L_Y, BATT_PREFIX_W,
+                        LV_TEXT_ALIGN_LEFT);
+    SET_TEXT(prefix, "L");
+    battery_l_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_L_Y,
+                                 BATT_VALUE_W, LV_TEXT_ALIGN_RIGHT);
+    battery_l_percent_label = make_label(screen, &lv_font_montserrat_8,
+                                         CANVAS_W - BATT_PERCENT_W, BATT_L_Y, BATT_PERCENT_W,
+                                         LV_TEXT_ALIGN_RIGHT);
+    SET_TEXT(battery_l_percent_label, "%");
 
-    make_rule(screen, RULE_LAYER_Y);
-
-    layer_label =
-        make_label(screen, &lv_font_montserrat_10, 0, LAYER_Y, CANVAS_W, LV_TEXT_ALIGN_LEFT);
+    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_R_Y, BATT_PREFIX_W,
+                        LV_TEXT_ALIGN_LEFT);
+    SET_TEXT(prefix, "R");
+    battery_r_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_R_Y,
+                                 BATT_VALUE_W, LV_TEXT_ALIGN_RIGHT);
+    battery_r_percent_label = make_label(screen, &lv_font_montserrat_8,
+                                         CANVAS_W - BATT_PERCENT_W, BATT_R_Y, BATT_PERCENT_W,
+                                         LV_TEXT_ALIGN_RIGHT);
+    SET_TEXT(battery_r_percent_label, "%");
+    if (battery_r_percent_label) {
+        lv_obj_add_flag(battery_r_percent_label, LV_OBJ_FLAG_HIDDEN);
+    }
 
     widget_batteries_init();
 #if IS_ENABLED(CONFIG_ZMK_BLE)

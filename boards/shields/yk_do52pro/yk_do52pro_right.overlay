@@ -26,11 +26,13 @@
 //#include <zephyr/dt-bindings/input/input-event-codes.h>
 #include "include/mouse_ps2_right.dtsi"
 #include <input/processors/report_rate_limit.dtsi>
+#include <input/processors/xyz.dtsi>
 
 &tpoint_split { 
      device = <&mouse_ps2>; 
      input-processors = 
         <&zip_report_rate_limit 16>,
-        <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
+        <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>,
+        <&zip_xyz>;
 };
 
