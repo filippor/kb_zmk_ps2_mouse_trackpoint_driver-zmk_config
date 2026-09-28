@@ -2,8 +2,7 @@
  * Custom status screen for yk_do52pro, on a 32x128 portrait canvas (see
  * display_rotate.h).
  *
- *   layer / num lock + caps lock / macro + caps word /
- *   USB + BT1 / BT2 + BT3 / BT4 + BT5 / battery left / battery right
+ *   layer / lock and macro status / USB + BLE profiles / battery left + right
  *
  * Every field is fixed width and sits at a fixed position, so nothing shifts
  * around as the state changes.
@@ -11,6 +10,8 @@
 
 #include <zephyr/kernel.h>
 #include <lvgl.h>
+#include <widgets/canvas/lv_canvas.h>
+#include <string.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -64,31 +65,48 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include "display_rotate.h"
 
 #define LAYER_Y 1
-#define RULE_STATUS_Y 15
-#define STATUS_ROW_Y(row) (19 + (row) * 11)
-#define RULE_CONN_Y 41
-#define CONN_ROW_Y(row) (45 + (row) * 13)
-#define RULE_BATT_Y 84
-#define BATT_L_Y 88
-#define BATT_R_Y 102
+#define RULE_LAYER_Y 14
+#define STATUS_ROW_Y(row) (17 + (row) * 11)
+#define RULE_STATUS_Y 41
+#define STATUS_DIVIDER_H (RULE_STATUS_Y - STATUS_ROW_Y(0))
+#define CONN_ROW_Y(row) (46 + (row) * 13)
+#define RULE_BATT_Y 85
+#define BATT_L_Y 89
+#define BATT_R_Y 103
 
 #define CONN_CELLS (1 + ZMK_BLE_PROFILE_COUNT)
 
 // Two columns per row, plus the narrow L/R gutter on the battery rows.
 #define COL_W (CANVAS_W / 2)
-#define BATT_PREFIX_W 6
-#define BATT_PERCENT_W 5
-#define BATT_VALUE_W (CANVAS_W - BATT_PREFIX_W - BATT_PERCENT_W)
+#define BATT_PREFIX_W 5
+#define BATT_VALUE_X BATT_PREFIX_W
+#define BATT_VALUE_W 18
+#define BATT_UNIT_X (BATT_VALUE_X + BATT_VALUE_W)
+#define BATT_UNIT_W (CANVAS_W - BATT_UNIT_X)
+#define CONN_ICON_W 10
+#define CONN_ICON_H 10
+#define MACRO_ICON_W 17
+#define MACRO_ICON_H 10
+#define STATUS_DIVIDER_W CANVAS_W
 
 static lv_obj_t *battery_l_label;
 static lv_obj_t *battery_r_label;
-static lv_obj_t *battery_l_percent_label;
-static lv_obj_t *battery_r_percent_label;
+static lv_obj_t *battery_l_unit_label;
+static lv_obj_t *battery_r_unit_label;
 static lv_obj_t *conn_labels[CONN_CELLS];
+static lv_obj_t *conn_icons[CONN_CELLS];
+static LV_ATTRIBUTE_MEM_ALIGN uint8_t conn_icon_buffers[CONN_CELLS]
+    [LV_DRAW_BUF_SIZE(CONN_ICON_W, CONN_ICON_H, LV_COLOR_FORMAT_I1)];
 static lv_obj_t *layer_label;
 static lv_obj_t *num_lock_label;
 static lv_obj_t *caps_lock_label;
 static lv_obj_t *macro_recording_label;
+static lv_obj_t *macro_status_icon;
+static LV_ATTRIBUTE_MEM_ALIGN uint8_t macro_icon_buffer[LV_DRAW_BUF_SIZE(
+    MACRO_ICON_W, MACRO_ICON_H, LV_COLOR_FORMAT_I1)];
+static lv_obj_t *status_divider_icon;
+static LV_ATTRIBUTE_MEM_ALIGN uint8_t status_divider_buffer[LV_DRAW_BUF_SIZE(
+    STATUS_DIVIDER_W, STATUS_DIVIDER_H, LV_COLOR_FORMAT_I1)];
 static lv_obj_t *caps_word_label;
 
 // LVGL returns NULL when its pool is exhausted; faulting here would kill USB too.
@@ -118,14 +136,8 @@ static void battery_update_cb(struct battery_state state) {
     SET_TEXT_FMT(battery_l_label, "%3u", state.central);
     if (state.peripheral_valid) {
         SET_TEXT_FMT(battery_r_label, "%3u", state.peripheral);
-        if (battery_r_percent_label) {
-            lv_obj_clear_flag(battery_r_percent_label, LV_OBJ_FLAG_HIDDEN);
-        }
     } else {
         SET_TEXT(battery_r_label, " --");
-        if (battery_r_percent_label) {
-            lv_obj_add_flag(battery_r_percent_label, LV_OBJ_FLAG_HIDDEN);
-        }
     }
 }
 
@@ -156,6 +168,36 @@ ZMK_SUBSCRIPTION(widget_batteries, zmk_peripheral_battery_state_changed);
 
 /* ------------------------------------------------------- BLE profiles + USB */
 
+static void draw_icon_pixel(lv_draw_buf_t *buffer, int x, int y) {
+    uint8_t *pixel = lv_draw_buf_goto_xy(buffer, x, y);
+    *pixel |= BIT(7 - (x & 7));
+}
+
+static void draw_status_cross(lv_obj_t *screen) {
+    status_divider_icon = lv_canvas_create(screen);
+    if (!status_divider_icon) {
+        return;
+    }
+
+    lv_canvas_set_buffer(status_divider_icon, status_divider_buffer, STATUS_DIVIDER_W,
+                         STATUS_DIVIDER_H, LV_COLOR_FORMAT_I1);
+    lv_canvas_set_palette(status_divider_icon, 0, lv_color32_make(0, 0, 0, 0));
+    lv_canvas_set_palette(status_divider_icon, 1,
+                          lv_color_to_32(lv_obj_get_style_text_color(screen, LV_PART_MAIN),
+                                         LV_OPA_COVER));
+
+    lv_draw_buf_t *buffer = lv_canvas_get_draw_buf(status_divider_icon);
+    memset(lv_draw_buf_goto_xy(buffer, 0, 0), 0, buffer->header.stride * STATUS_DIVIDER_H);
+    for (int x = 2; x < STATUS_DIVIDER_W; x += 4) {
+        draw_icon_pixel(buffer, x, STATUS_ROW_Y(1) - STATUS_ROW_Y(0) - 1);
+    }
+    for (int y = 1; y < STATUS_DIVIDER_H; y += 4) {
+        draw_icon_pixel(buffer, COL_W, y);
+    }
+
+    lv_obj_set_pos(status_divider_icon, 0, STATUS_ROW_Y(0));
+}
+
 #if IS_ENABLED(CONFIG_ZMK_BLE)
 
 struct output_state {
@@ -169,53 +211,51 @@ struct output_state {
 #endif
 };
 
-// Increasing visual weight: unused < paired < connected < selected.
-#define SYM_UNUSED ' '
-#define SYM_PAIRED 'o'
-#define SYM_CONNECTED '*'
-#define SYM_SELECTED '#'
-#define SYM_SELECTED_UNUSED '-'
-#define SYM_SELECTED_PAIRED 'O'
+static void set_conn_icon(size_t index, bool active, bool paired, bool connected, bool selected) {
+    lv_obj_t *icon = conn_icons[index];
+    if (!icon) {
+        return;
+    }
+
+    lv_draw_buf_t *buffer = lv_canvas_get_draw_buf(icon);
+    memset(lv_draw_buf_goto_xy(buffer, 0, 0), 0, buffer->header.stride * CONN_ICON_H);
+
+    for (int y = 0; y < CONN_ICON_H; y++) {
+        for (int x = 0; x < CONN_ICON_W; x++) {
+            bool square = selected && (x == 0 || x == 9 || y == 0 || y == 9);
+            bool large_circle = active &&
+                                ((y == 0 || y == 9) ? (x >= 4 && x <= 5)
+                                 : (y == 1 || y == 8) ? (x == 2 || x == 3 || x == 6 || x == 7)
+                                 : (y == 2 || y == 7) ? (x == 1 || x == 8)
+                                 : (y >= 3 && y <= 6) && (x == 0 || x == 9));
+            bool small_circle = paired &&
+                                ((y == 2 || y == 7) ? (x >= 3 && x <= 6)
+                                 : (y >= 3 && y <= 6) && (x == 2 || x == 7));
+            bool dot = connected && x >= 3 && x <= 6 && y >= 3 && y <= 6;
+
+            if (square || large_circle || small_circle || dot) {
+                draw_icon_pixel(buffer, x, y);
+            }
+        }
+    }
+    lv_obj_invalidate(icon);
+}
 
 static void output_update_cb(struct output_state state) {
 #if IS_ENABLED(CONFIG_ZMK_USB)
-    char usb_status;
-    if (state.selected_transport == ZMK_TRANSPORT_USB) {
-        usb_status = SYM_SELECTED;
-    } else if (state.preferred_transport == ZMK_TRANSPORT_USB) {
-        usb_status = state.usb_state == ZMK_USB_CONN_NONE ? SYM_SELECTED_UNUSED
-                                                         : SYM_SELECTED_PAIRED;
-    } else {
-        switch (state.usb_state) {
-        case ZMK_USB_CONN_HID:
-            usb_status = SYM_CONNECTED;
-            break;
-        case ZMK_USB_CONN_POWERED:
-            usb_status = SYM_PAIRED;
-            break;
-        default:
-            usb_status = SYM_UNUSED;
-            break;
-        }
-    }
-    SET_TEXT_FMT(conn_labels[0], "U%c", usb_status);
-#else
-    SET_TEXT_FMT(conn_labels[0], "U%c", SYM_UNUSED);
+    set_conn_icon(0, state.selected_transport == ZMK_TRANSPORT_USB,
+                  state.usb_state != ZMK_USB_CONN_NONE, state.usb_state == ZMK_USB_CONN_HID,
+                  state.preferred_transport == ZMK_TRANSPORT_USB);
 #endif
+    SET_TEXT(conn_labels[0], "U");
 
     for (uint8_t i = 0; i < ZMK_BLE_PROFILE_COUNT; i++) {
-        char status;
-        if (state.selected_transport == ZMK_TRANSPORT_BLE && state.active_profile == i) {
-            status = SYM_SELECTED;
-        } else if (state.preferred_transport == ZMK_TRANSPORT_BLE &&
-                   state.active_profile == i) {
-            status = state.profile_open[i] ? SYM_SELECTED_UNUSED : SYM_SELECTED_PAIRED;
-        } else if (state.profile_connected[i]) {
-            status = SYM_CONNECTED;
-        } else {
-            status = state.profile_open[i] ? SYM_UNUSED : SYM_PAIRED;
-        }
-        SET_TEXT_FMT(conn_labels[i + 1], "%u%c", i + 1, status);
+        bool active_profile = state.active_profile == i;
+        set_conn_icon(i + 1,
+                      state.selected_transport == ZMK_TRANSPORT_BLE && active_profile,
+                      !state.profile_open[i], state.profile_connected[i],
+                      state.preferred_transport == ZMK_TRANSPORT_BLE && active_profile);
+        SET_TEXT_FMT(conn_labels[i + 1], "%u", i + 1);
     }
 }
 
@@ -331,11 +371,31 @@ struct macro_status_state {
 
 static void macro_status_update_cb(struct macro_status_state state) {
     if (state.recording_count > 0) {
-        SET_TEXT_FMT(macro_recording_label, "R%d%s", state.recording_count,
-                     state.scheduled ? "P" : "");
+        SET_TEXT_FMT(macro_recording_label, "%d", state.recording_count);
     } else {
-        SET_TEXT(macro_recording_label, state.scheduled ? "P" : "");
+        SET_TEXT(macro_recording_label, "");
     }
+
+    if (!macro_status_icon) {
+        return;
+    }
+
+    lv_draw_buf_t *buffer = lv_canvas_get_draw_buf(macro_status_icon);
+    memset(lv_draw_buf_goto_xy(buffer, 0, 0), 0, buffer->header.stride * MACRO_ICON_H);
+    for (int y = 0; y < MACRO_ICON_H; y++) {
+        for (int x = 0; x < MACRO_ICON_W; x++) {
+            bool circle = state.recording_count > 0 &&
+                          ((y == 1 || y == 7) ? (x >= 7 && x <= 9)
+                           : (y == 2 || y == 6) ? (x >= 6 && x <= 10)
+                                                  : (y >= 3 && y <= 5) && (x >= 5 && x <= 11));
+            bool play = state.scheduled && x >= 0 && x <= 4 && y >= 1 && y <= 7 &&
+                        x <= (y <= 4 ? y - 1 : 7 - y);
+            if (circle || play) {
+                draw_icon_pixel(buffer, x, y);
+            }
+        }
+    }
+    lv_obj_invalidate(macro_status_icon);
 }
 
 static struct macro_status_state macro_status_get_state(const zmk_event_t *eh) {
@@ -403,51 +463,62 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
     lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_t *prefix;
+    layer_label =
+        make_label(screen, &lv_font_montserrat_10, 0, LAYER_Y, CANVAS_W, LV_TEXT_ALIGN_LEFT);
+    make_rule(screen, RULE_LAYER_Y);
 
-    layer_label = make_label(screen, &lv_font_montserrat_10, 0, LAYER_Y, CANVAS_W,
-                             LV_TEXT_ALIGN_LEFT);
-
+    draw_status_cross(screen);
+    caps_lock_label     = make_label(screen, &lv_font_montserrat_8, 0    , STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_LEFT);
+    caps_word_label     = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_RIGHT);
+    macro_status_icon   = lv_canvas_create(screen);
+    if (macro_status_icon) {
+        lv_canvas_set_buffer(macro_status_icon, macro_icon_buffer, MACRO_ICON_W, MACRO_ICON_H,
+                             LV_COLOR_FORMAT_I1);
+        lv_canvas_set_palette(macro_status_icon, 0, lv_color32_make(0, 0, 0, 0));
+        lv_canvas_set_palette(macro_status_icon, 1,
+                              lv_color_to_32(lv_obj_get_style_text_color(screen, LV_PART_MAIN),
+                                             LV_OPA_COVER));
+        lv_obj_set_pos(macro_status_icon, 0, STATUS_ROW_Y(1));
+    }
+    macro_recording_label = make_label(screen, &lv_font_montserrat_8, 12, STATUS_ROW_Y(1), 5, LV_TEXT_ALIGN_LEFT);
+    num_lock_label  = make_label(screen, &lv_font_montserrat_8, 17, STATUS_ROW_Y(1), CANVAS_W - 17, LV_TEXT_ALIGN_RIGHT);
     make_rule(screen, RULE_STATUS_Y);
-
-    caps_lock_label       = make_label(screen, &lv_font_montserrat_8, 0    , STATUS_ROW_Y(0), COL_W        , LV_TEXT_ALIGN_LEFT);
-    caps_word_label       = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W        , LV_TEXT_ALIGN_RIGHT);
-    macro_recording_label = make_label(screen, &lv_font_montserrat_8, 0    , STATUS_ROW_Y(1), 17           , LV_TEXT_ALIGN_LEFT);
-    num_lock_label        = make_label(screen, &lv_font_montserrat_8, 17   , STATUS_ROW_Y(1), CANVAS_W - 17, LV_TEXT_ALIGN_RIGHT);
-
-    make_rule(screen, RULE_CONN_Y);
 
     for (size_t i = 0; i < CONN_CELLS; i++) {
         const bool right = (i % 2) != 0;
-        conn_labels[i] = make_label(screen, &lv_font_montserrat_10, right ? COL_W : 0,
-                                    CONN_ROW_Y(i / 2), COL_W,
-                                    right ? LV_TEXT_ALIGN_RIGHT : LV_TEXT_ALIGN_LEFT);
+        lv_coord_t x = right ? COL_W : 0;
+        conn_labels[i] = make_label(screen, &lv_font_montserrat_8, right ? x + CONN_ICON_W : x,
+                                    CONN_ROW_Y(i / 2), 6, LV_TEXT_ALIGN_LEFT);
+        conn_icons[i] = lv_canvas_create(screen);
+        if (conn_icons[i]) {
+            lv_canvas_set_buffer(conn_icons[i], conn_icon_buffers[i], CONN_ICON_W, CONN_ICON_H,
+                                 LV_COLOR_FORMAT_I1);
+            lv_canvas_set_palette(conn_icons[i], 0, lv_color32_make(0, 0, 0, 0));
+            lv_canvas_set_palette(conn_icons[i], 1,
+                                  lv_color_to_32(lv_obj_get_style_text_color(screen, LV_PART_MAIN),
+                                                 LV_OPA_COVER));
+            lv_obj_set_pos(conn_icons[i], right ? x : x + 6, CONN_ROW_Y(i / 2));
+        }
     }
 
     make_rule(screen, RULE_BATT_Y);
-
-    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_L_Y, BATT_PREFIX_W,
-                        LV_TEXT_ALIGN_LEFT);
+    lv_obj_t *prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_L_Y, BATT_PREFIX_W,
+                                  LV_TEXT_ALIGN_LEFT);
     SET_TEXT(prefix, "L");
-    battery_l_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_L_Y,
+    battery_l_label = make_label(screen, &lv_font_montserrat_10, BATT_VALUE_X, BATT_L_Y,
                                  BATT_VALUE_W, LV_TEXT_ALIGN_RIGHT);
-    battery_l_percent_label = make_label(screen, &lv_font_montserrat_8,
-                                         CANVAS_W - BATT_PERCENT_W, BATT_L_Y, BATT_PERCENT_W,
-                                         LV_TEXT_ALIGN_RIGHT);
-    SET_TEXT(battery_l_percent_label, "%");
+    battery_l_unit_label = make_label(screen, &lv_font_montserrat_8, BATT_UNIT_X, BATT_L_Y,
+                                      BATT_UNIT_W, LV_TEXT_ALIGN_LEFT);
+    SET_TEXT(battery_l_unit_label, "%");
 
     prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_R_Y, BATT_PREFIX_W,
                         LV_TEXT_ALIGN_LEFT);
     SET_TEXT(prefix, "R");
-    battery_r_label = make_label(screen, &lv_font_montserrat_10, BATT_PREFIX_W, BATT_R_Y,
+    battery_r_label = make_label(screen, &lv_font_montserrat_10, BATT_VALUE_X, BATT_R_Y,
                                  BATT_VALUE_W, LV_TEXT_ALIGN_RIGHT);
-    battery_r_percent_label = make_label(screen, &lv_font_montserrat_8,
-                                         CANVAS_W - BATT_PERCENT_W, BATT_R_Y, BATT_PERCENT_W,
-                                         LV_TEXT_ALIGN_RIGHT);
-    SET_TEXT(battery_r_percent_label, "%");
-    if (battery_r_percent_label) {
-        lv_obj_add_flag(battery_r_percent_label, LV_OBJ_FLAG_HIDDEN);
-    }
+    battery_r_unit_label = make_label(screen, &lv_font_montserrat_8, BATT_UNIT_X, BATT_R_Y,
+                                      BATT_UNIT_W, LV_TEXT_ALIGN_LEFT);
+    SET_TEXT(battery_r_unit_label, "%");
 
     widget_batteries_init();
 #if IS_ENABLED(CONFIG_ZMK_BLE)
