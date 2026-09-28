@@ -53,6 +53,11 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/keycode_state_changed.h>
 #include <zmk/events/position_state_changed.h>
 
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
+#include <zmk/dynamic_macros.h>
+#include <zmk/events/dynamic_macros_changed.h>
+#endif
+
 #include "display_rotate.h"
 
 #define BATT_L_Y 1
@@ -76,7 +81,7 @@ static lv_obj_t *conn_labels[CONN_CELLS];
 static lv_obj_t *layer_label;
 static lv_obj_t *num_lock_label;
 static lv_obj_t *caps_lock_label;
-static lv_obj_t *scroll_lock_label;
+static lv_obj_t *macro_recording_label;
 static lv_obj_t *caps_word_label;
 
 // LVGL returns NULL when its pool is exhausted; faulting here would kill USB too.
@@ -281,7 +286,6 @@ static bool caps_word_is_active(void) {
 static void caps_update_cb(struct caps_state state) {
     SET_TEXT(num_lock_label, state.num_lock ? "BN" : "");
     SET_TEXT(caps_lock_label, state.caps_lock ? "CL" : "");
-    SET_TEXT(scroll_lock_label, state.scroll_lock ? "SL" : "");
     SET_TEXT(caps_word_label, state.caps_word ? "CW" : "");
 }
 
@@ -305,6 +309,24 @@ ZMK_SUBSCRIPTION(widget_caps, zmk_position_state_changed);
 ZMK_SUBSCRIPTION(widget_caps, zmk_keycode_state_changed);
 #if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
 ZMK_SUBSCRIPTION(widget_caps, zmk_hid_indicators_changed);
+#endif
+
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
+static void macro_recording_update_cb(int count) {
+    if (count > 0) {
+        SET_TEXT_FMT(macro_recording_label, "R%d", count);
+    } else {
+        SET_TEXT(macro_recording_label, "");
+    }
+}
+
+static int macro_recording_get_state(const zmk_event_t *eh) {
+    return zmk_recording_macro_count();
+}
+
+ZMK_DISPLAY_WIDGET_LISTENER(widget_macro_recording, int, macro_recording_update_cb,
+                            macro_recording_get_state)
+ZMK_SUBSCRIPTION(widget_macro_recording, zmk_dynamic_macros_changed);
 #endif
 
 /* ------------------------------------------------------------------- screen */
@@ -385,7 +407,7 @@ lv_obj_t *zmk_display_status_screen(void) {
         make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_LEFT);
     caps_lock_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W,
                                  LV_TEXT_ALIGN_RIGHT);
-    scroll_lock_label =
+    macro_recording_label =
         make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(1), COL_W, LV_TEXT_ALIGN_LEFT);
     caps_word_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(1), COL_W,
                                  LV_TEXT_ALIGN_RIGHT);
@@ -401,6 +423,9 @@ lv_obj_t *zmk_display_status_screen(void) {
 #endif
     widget_layer_init();
     widget_caps_init();
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
+    widget_macro_recording_init();
+#endif
 
     return screen;
 }
