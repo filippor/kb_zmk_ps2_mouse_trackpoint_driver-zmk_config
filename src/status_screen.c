@@ -58,6 +58,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/dynamic_macros_changed.h>
 #endif
 
+#include <zmk/behavior_queue.h>
+#include <zmk/events/behavior_queue_state_changed.h>
+
 #include "display_rotate.h"
 
 #define BATT_L_Y 1
@@ -311,23 +314,35 @@ ZMK_SUBSCRIPTION(widget_caps, zmk_keycode_state_changed);
 ZMK_SUBSCRIPTION(widget_caps, zmk_hid_indicators_changed);
 #endif
 
-#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
-static void macro_recording_update_cb(int count) {
-    if (count > 0) {
-        SET_TEXT_FMT(macro_recording_label, "R%d", count);
+struct macro_status_state {
+    int recording_count;
+    bool scheduled;
+};
+
+static void macro_status_update_cb(struct macro_status_state state) {
+    if (state.recording_count > 0) {
+        SET_TEXT_FMT(macro_recording_label, "R%d%s", state.recording_count,
+                     state.scheduled ? "P" : "");
     } else {
-        SET_TEXT(macro_recording_label, "");
+        SET_TEXT(macro_recording_label, state.scheduled ? "P" : "");
     }
 }
 
-static int macro_recording_get_state(const zmk_event_t *eh) {
-    return zmk_recording_macro_count();
+static struct macro_status_state macro_status_get_state(const zmk_event_t *eh) {
+    return (struct macro_status_state){
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
+        .recording_count = zmk_recording_macro_count(),
+#endif
+        .scheduled = zmk_behavior_queue_work_is_scheduled(),
+    };
 }
 
-ZMK_DISPLAY_WIDGET_LISTENER(widget_macro_recording, int, macro_recording_update_cb,
-                            macro_recording_get_state)
-ZMK_SUBSCRIPTION(widget_macro_recording, zmk_dynamic_macros_changed);
+ZMK_DISPLAY_WIDGET_LISTENER(widget_macro_status, struct macro_status_state, macro_status_update_cb,
+                            macro_status_get_state)
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
+ZMK_SUBSCRIPTION(widget_macro_status, zmk_dynamic_macros_changed);
 #endif
+ZMK_SUBSCRIPTION(widget_macro_status, zmk_behavior_queue_state_changed);
 
 /* ------------------------------------------------------------------- screen */
 
@@ -408,8 +423,8 @@ lv_obj_t *zmk_display_status_screen(void) {
     caps_lock_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W,
                                  LV_TEXT_ALIGN_RIGHT);
     macro_recording_label =
-        make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(1), COL_W, LV_TEXT_ALIGN_LEFT);
-    caps_word_label = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(1), COL_W,
+        make_label(screen, &lv_font_montserrat_8, 0, STATUS_ROW_Y(1), 17, LV_TEXT_ALIGN_LEFT);
+    caps_word_label = make_label(screen, &lv_font_montserrat_8, 17, STATUS_ROW_Y(1), CANVAS_W - 17,
                                  LV_TEXT_ALIGN_RIGHT);
 
     make_rule(screen, RULE_LAYER_Y);
@@ -423,9 +438,7 @@ lv_obj_t *zmk_display_status_screen(void) {
 #endif
     widget_layer_init();
     widget_caps_init();
-#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_DYNAMIC_MACRO)
-    widget_macro_recording_init();
-#endif
+    widget_macro_status_init();
 
     return screen;
 }
