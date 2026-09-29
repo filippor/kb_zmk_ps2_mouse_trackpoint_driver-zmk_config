@@ -65,14 +65,13 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include "display_rotate.h"
 
-#define LAYER_Y 1
-#define RULE_LAYER_Y 14
-#define STATUS_ROW_Y(row) (17 + (row) * 11)
-#define RULE_STATUS_Y 48
+#define LAYER_Y 3
+#define STATUS_ROW_Y(row) (32 + (row) * 11)
+#define CONN_START_Y 56
 #define STATUS_DIVIDER_H (STATUS_ROW_Y(1) - STATUS_ROW_Y(0) + 10)
-#define CONN_ROW_Y(row) (RULE_STATUS_Y + 3 + (row) * 13)
-#define RULE_BATT_Y 89
-#define BATT_L_Y 92
+#define CONN_ROW_Y(row) (CONN_START_Y + (row) * 13)
+#define RULE_BATT_Y 93 
+#define BATT_L_Y 96
 #define BATT_R_Y (BATT_L_Y + 11)
 
 #define CONN_CELLS (1 + ZMK_BLE_PROFILE_COUNT)
@@ -89,11 +88,12 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define MACRO_ICON_W 17
 #define MACRO_ICON_H 10
 #define STATUS_DIVIDER_W CANVAS_W
+#define STATUS_DOT_SPACING 2
 #define MODIFIER_ICON_W CANVAS_W
-#define MODIFIER_ICON_H 5
-#define MODIFIER_ICON_Y 40
-#define MODIFIER_SQUARE_SIZE 5
-#define MODIFIER_SQUARE_GAP 1
+#define MODIFIER_ICON_H 11
+#define MODIFIER_ICON_Y 21
+#define MODIFIER_RECT_WIDTH (MODIFIER_ICON_W / 4)
+#define MODIFIER_ROW_HEIGHT 4
 
 static lv_obj_t *battery_l_label;
 static lv_obj_t *battery_r_label;
@@ -197,11 +197,16 @@ static void draw_status_cross(lv_obj_t *screen) {
 
     lv_draw_buf_t *buffer = lv_canvas_get_draw_buf(status_divider_icon);
     memset(lv_draw_buf_goto_xy(buffer, 0, 0), 0, buffer->header.stride * STATUS_DIVIDER_H);
-    for (int x = 2; x < STATUS_DIVIDER_W; x += 4) {
+    for (int x = 2; x < STATUS_DIVIDER_W; x += STATUS_DOT_SPACING) {
         draw_icon_pixel(buffer, x, STATUS_ROW_Y(1) - STATUS_ROW_Y(0) - 1);
     }
-    for (int y = 1; y < STATUS_DIVIDER_H; y += 4) {
+    for (int y = 1; y < STATUS_DIVIDER_H; y += STATUS_DOT_SPACING) {
         draw_icon_pixel(buffer, COL_W, y);
+        draw_icon_pixel(buffer, 0, y);
+        draw_icon_pixel(buffer, STATUS_DIVIDER_W - 1, y);
+    }
+    for (int x = 2; x < STATUS_DIVIDER_W; x += STATUS_DOT_SPACING) {
+        draw_icon_pixel(buffer, x, STATUS_DIVIDER_H - 1);
     }
 
     lv_obj_set_pos(status_divider_icon, 0, STATUS_ROW_Y(0));
@@ -215,24 +220,49 @@ static void set_modifier_icon(zmk_mod_flags_t modifiers) {
     lv_draw_buf_t *buffer = lv_canvas_get_draw_buf(modifier_icon);
     memset(lv_draw_buf_goto_xy(buffer, 0, 0), 0, buffer->header.stride * MODIFIER_ICON_H);
 
-    const zmk_mod_flags_t modifier_masks[] = {
-        MOD_LGUI | MOD_RGUI,
-        MOD_RALT,
+    const zmk_mod_flags_t left_modifiers[] = {
+        MOD_LGUI,
         MOD_LALT,
-        MOD_LCTL | MOD_RCTL,
-        MOD_LSFT | MOD_RSFT,
+        MOD_LCTL,
+        MOD_LSFT,
     };
-    const int total_width = 5 * MODIFIER_SQUARE_SIZE + 4 * MODIFIER_SQUARE_GAP;
-    const int start_x = (MODIFIER_ICON_W - total_width) / 2;
+    const zmk_mod_flags_t right_modifiers[] = {
+        MOD_RGUI,
+        MOD_RALT,
+        MOD_RCTL,
+        MOD_RSFT,
+    };
+    for (size_t boundary = 0; boundary <= ARRAY_SIZE(left_modifiers); boundary++) {
+        const int x = boundary == ARRAY_SIZE(left_modifiers)
+                          ? MODIFIER_ICON_W - 1
+                          : boundary * MODIFIER_RECT_WIDTH;
+        for (int y = 1; y < MODIFIER_ICON_H - 1; y += STATUS_DOT_SPACING) {
+            draw_icon_pixel(buffer, x, y);
+        }
+    }
 
-    for (size_t i = 0; i < ARRAY_SIZE(modifier_masks); i++) {
-        const bool pressed = (modifiers & modifier_masks[i]) != 0;
-        const int x0 = start_x + i * (MODIFIER_SQUARE_SIZE + MODIFIER_SQUARE_GAP);
-        for (int y = 0; y < MODIFIER_SQUARE_SIZE; y++) {
-            for (int x = 0; x < MODIFIER_SQUARE_SIZE; x++) {
-                if (pressed || x == 0 || x == MODIFIER_SQUARE_SIZE - 1 || y == 0 ||
-                    y == MODIFIER_SQUARE_SIZE - 1) {
-                    draw_icon_pixel(buffer, x0 + x, y);
+    const int horizontal_boundaries[] = {0, MODIFIER_ROW_HEIGHT + 1, MODIFIER_ICON_H - 1};
+    for (size_t boundary = 0; boundary < ARRAY_SIZE(horizontal_boundaries); boundary++) {
+        for (int x = 2; x < MODIFIER_ICON_W - 1; x += STATUS_DOT_SPACING) {
+            draw_icon_pixel(buffer, x, horizontal_boundaries[boundary]);
+        }
+    }
+
+    for (size_t row = 0; row < 2; row++) {
+        const zmk_mod_flags_t *row_modifiers = row == 0 ? left_modifiers : right_modifiers;
+        const int y0 = row == 0 ? 1 : MODIFIER_ROW_HEIGHT + 2;
+        for (size_t column = 0; column < ARRAY_SIZE(left_modifiers); column++) {
+            if ((modifiers & row_modifiers[column]) == 0) {
+                continue;
+            }
+
+            const int x0 = column * MODIFIER_RECT_WIDTH + 1;
+            const int x_end = x0 + MODIFIER_RECT_WIDTH - 1 < MODIFIER_ICON_W - 1
+                                  ? x0 + MODIFIER_RECT_WIDTH - 1
+                                  : MODIFIER_ICON_W - 1;
+            for (int y = y0; y < y0 + MODIFIER_ROW_HEIGHT; y++) {
+                for (int x = x0; x < x_end; x++) {
+                    draw_icon_pixel(buffer, x, y);
                 }
             }
         }
@@ -438,8 +468,8 @@ static void macro_status_update_cb(struct macro_status_state state) {
                           ((y == 1 || y == 7) ? (x >= 7 && x <= 9)
                            : (y == 2 || y == 6) ? (x >= 6 && x <= 10)
                                                   : (y >= 3 && y <= 5) && (x >= 5 && x <= 11));
-            bool play = state.scheduled && x >= 0 && x <= 4 && y >= 1 && y <= 7 &&
-                        x <= (y <= 4 ? y - 1 : 7 - y);
+            bool play = state.scheduled && x >= 1 && x <= 5 && y >= 1 && y <= 7 &&
+                        x - 1 <= (y <= 4 ? y - 1 : 7 - y);
             if (circle || play) {
                 draw_icon_pixel(buffer, x, y);
             }
@@ -514,12 +544,11 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
     layer_label =
-        make_label(screen, &lv_font_montserrat_10, 0, LAYER_Y, CANVAS_W, LV_TEXT_ALIGN_LEFT);
-    make_rule(screen, RULE_LAYER_Y);
+        make_label(screen, &lv_font_montserrat_12, 0, LAYER_Y, CANVAS_W, LV_TEXT_ALIGN_LEFT);
 
     draw_status_cross(screen);
-    caps_lock_label     = make_label(screen, &lv_font_montserrat_8, 0    , STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_LEFT);
-    caps_word_label     = make_label(screen, &lv_font_montserrat_8, COL_W, STATUS_ROW_Y(0), COL_W, LV_TEXT_ALIGN_RIGHT);
+    caps_lock_label     = make_label(screen, &lv_font_montserrat_8, 2    , STATUS_ROW_Y(0), COL_W - 2, LV_TEXT_ALIGN_LEFT);
+    caps_word_label     = make_label(screen, &lv_font_montserrat_8, COL_W+1, STATUS_ROW_Y(0), COL_W-1, LV_TEXT_ALIGN_LEFT);
     macro_status_icon   = lv_canvas_create(screen);
     if (macro_status_icon) {
         lv_canvas_set_buffer(macro_status_icon, macro_icon_buffer, MACRO_ICON_W, MACRO_ICON_H,
@@ -530,9 +559,8 @@ lv_obj_t *zmk_display_status_screen(void) {
                                              LV_OPA_COVER));
         lv_obj_set_pos(macro_status_icon, 0, STATUS_ROW_Y(1));
     }
-    macro_recording_label = make_label(screen, &lv_font_montserrat_8, 12, STATUS_ROW_Y(1), 5, LV_TEXT_ALIGN_LEFT);
-    num_lock_label  = make_label(screen, &lv_font_montserrat_8, 17, STATUS_ROW_Y(1), CANVAS_W - 17, LV_TEXT_ALIGN_RIGHT);
-    make_rule(screen, RULE_STATUS_Y);
+    macro_recording_label = make_label(screen, &lv_font_montserrat_8, 14, STATUS_ROW_Y(1), 5, LV_TEXT_ALIGN_LEFT);
+    num_lock_label  = make_label(screen, &lv_font_montserrat_8, COL_W +2, STATUS_ROW_Y(1), COL_W -2 , LV_TEXT_ALIGN_LEFT);
 
     for (size_t i = 0; i < CONN_CELLS; i++) {
         const bool right = (i % 2) != 0;
@@ -552,7 +580,7 @@ lv_obj_t *zmk_display_status_screen(void) {
     }
 
     make_rule(screen, RULE_BATT_Y);
-    lv_obj_t *prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_L_Y, BATT_PREFIX_W,
+    lv_obj_t *prefix = make_label(screen, &lv_font_montserrat_8, 0, BATT_L_Y, BATT_PREFIX_W,
                                   LV_TEXT_ALIGN_LEFT);
     SET_TEXT(prefix, "L");
     battery_l_label = make_label(screen, &lv_font_montserrat_10, BATT_VALUE_X, BATT_L_Y,
@@ -561,7 +589,7 @@ lv_obj_t *zmk_display_status_screen(void) {
                                       BATT_UNIT_W, LV_TEXT_ALIGN_LEFT);
     SET_TEXT(battery_l_unit_label, "%");
 
-    prefix = make_label(screen, &lv_font_montserrat_10, 0, BATT_R_Y, BATT_PREFIX_W,
+    prefix = make_label(screen, &lv_font_montserrat_8, 0, BATT_R_Y, BATT_PREFIX_W,
                         LV_TEXT_ALIGN_LEFT);
     SET_TEXT(prefix, "R");
     battery_r_label = make_label(screen, &lv_font_montserrat_10, BATT_VALUE_X, BATT_R_Y,
@@ -580,7 +608,6 @@ lv_obj_t *zmk_display_status_screen(void) {
                                              LV_OPA_COVER));
         lv_obj_set_pos(modifier_icon, 0, MODIFIER_ICON_Y);
     }
-
     widget_batteries_init();
 #if IS_ENABLED(CONFIG_ZMK_BLE)
     widget_outputs_init();

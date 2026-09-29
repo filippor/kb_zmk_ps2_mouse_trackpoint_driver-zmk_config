@@ -78,23 +78,33 @@
 #endif  // HAS_MOUSE_TP
 
 
-#define QUICK_TAP_MS 250 
-#define TAPPING_TERM_MS 200
+#define QUICK_TAP_MS 300 
+#define TAPPING_TERM_MS 250
 #define PRIOR_IDLE_MS 75
-#define FLAVOUR "balanced"
+#define FLAVOUR "tap-preferred"
 // Disable line-wrap in your editor to see a "visualization" of the key layouts
 / {
    combos {
         compatible = "zmk,combos";
         combo_esc {
             timeout-ms = <50>;
-            key-positions = <25 26>; // A and S
+            key-positions = <27 28>; // A and S
             bindings = <&kp ESC>;
         };
-         combo_ret {
+        combo_int {
+            timeout-ms = <50>;
+            key-positions = <25 26>; // A and S
+            bindings = <&kp NON_US_BACKSLASH>;
+        };
+        combo_ret {
+            timeout-ms = <50>;
+            key-positions = <31 32>; // J and K
+            bindings = <&kp KP_ENTER>;
+        };
+        combo_menu {
             timeout-ms = <50>;
             key-positions = <33 34>; // L and ;
-            bindings = <&kp RET>;
+            bindings = <&kp GUI>;
         };
     };
   
@@ -186,7 +196,7 @@
 //|-----------------|-------------|-----------|------------|-----------------|----------------|---------------|   |---------------|---------------|-------------|------------|---------------|---------------|-------------|
    &kp GRAVE         &kp N1        &kp N2      &kp N3       &kp N4            &kp N5                                               &kp N6          &kp N7        &kp N8       &kp N9          &kp N0          &kp MINUS
    &kp LBKT          &kp Q         &hml RALT W &kp E        &kp R             &kp T                                                &kp Y           &kp U         &kp I        &hmr RALT O     &kp P           &kp EQUAL
-   &kp RBKT          &hml LMETA A  &hml LALT S &hml LCTRL D &hml LSHIFT F     &hml RALT G                                          &hml RALT H     &hmr RSHIFT J &hmr RCTRL K &hmr LALT L     &hmr LMETA SEMI &kp SQT
+   &kp RBKT          &hml LMETA A  &hml LALT S &hml LCTRL D &hml LSHIFT F     &hml RALT G                                          &hml RALT H     &hmr RSHIFT J &hmr RCTRL K &hmr LALT L     &hmr RMETA SEMI &kp SQT
    &kp LSHFT         &kp Z         &hml RALT X &kp C        &kp V             &kp B                                                &kp N           &kp M         &kp COMMA    &hmr RALT DOT   &tl MOUSE FSLH  &kp BSLH
    &kp LCTRL         &kp LALT                               &tl FUNCTION ESC  &tl NAVIG TAB    &tl NUMBER SPACE    &tl NAVIG BSPC  &tl MEDIA DEL   &tl CONFIG RET                             &kp LMETA       &kp RALT
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
@@ -229,10 +239,10 @@
       display-name = "Nav";
          bindings = <
 //|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
-   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans        &trans          &trans
-   &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &kp INS                                             &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &trans
+   &kp F12      &kp F1        &kp F2      &kp F3      &kp F4          &kp F5                                              &kp F6          &kp F7        &kp F8      &kp F9        &kp F10         &kp F11
+   &trans       &kp HOME      &kp PG_UP   &kp PG_DN   &kp END         &kp INS                                             &trans          &kp RA(GRAVE) &kp RA(SQT) &trans        &trans          &kp F12
    &tog GAME_M  &kp LEFT      &kp UP      &kp DOWN    &kp RIGHT       &kp CAPS                                            &kp RALT        &kp LSHIFT    &kp LCTRL   &kp LALT      &kp LMETA       &trans
-   &tog GAME    &kp PRSC      &kp PAUS    &kp SLCK    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
+   &tog GAME    &kp PRSC      &kp SLCK    &kp PAUS    &kp KP_NUM      &caps_word                                          &trans          &trans        &trans      &kp RALT      &trans          &trans
    &dmf RECORD  &dmf PLAY                             &caps_word      &kp LPAR        &kp RPAR            &trans          &trans          &trans                                  &trans          &trans 
                                                                            // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
                                                                                     &trans    &trans     &trans      &trans     &trans        //left
@@ -286,9 +296,8 @@
       >;
     };
 
-    
 //7
-    Func_layer {
+ Func_layer {
       display-name = "Funct";
       bindings = <
 //|-----------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|-------------|---------------|------------|
