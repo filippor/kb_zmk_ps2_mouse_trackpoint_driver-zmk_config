@@ -81,14 +81,14 @@
 #define QUICK_TAP_MS 300 
 #define TAPPING_TERM_MS 250
 #define PRIOR_IDLE_MS 75
-#define FLAVOUR "tap-preferred"
+#define FLAVOUR "balanced"
 // Disable line-wrap in your editor to see a "visualization" of the key layouts
 / {
    combos {
         compatible = "zmk,combos";
         combo_esc {
             timeout-ms = <50>;
-            key-positions = <27 28>; // A and S
+            key-positions = <27 28>; // D and F
             bindings = <&kp ESC>;
         };
         combo_int {
@@ -110,7 +110,7 @@
   
   behaviors {
        /* left-hand HRMs */
-        hml: homerow_mods_left {
+        hml: hml{
             compatible = "zmk,behavior-hold-tap";
             flavor = FLAVOUR;
             tapping-term-ms = <TAPPING_TERM_MS>;
@@ -123,7 +123,7 @@
         };
 
         /* right-hand HRMs */
-        hmr: homerow_mods_right {
+        hmr: hmr{
             compatible = "zmk,behavior-hold-tap";
             flavor = FLAVOUR;
             tapping-term-ms = <TAPPING_TERM_MS>;
@@ -135,7 +135,7 @@
             hold-trigger-on-release;             // delay positional check until key-release
         };
         
-        tl: thumb_layer {
+        tl: tl{
             compatible = "zmk,behavior-hold-tap";
              flavor = "hold-preferred";
             tapping-term-ms = <TAPPING_TERM_MS>;
@@ -145,9 +145,9 @@
             bindings = <&mo>, <&kp>;
             hold-trigger-on-release;             // delay positional check until key-release
         };
-        tl_e: thumb_layer_esc {
+        tl_e {
             compatible = "zmk,behavior-hold-tap";
-             flavor = "hold-preferred";
+            flavor = "hold-preferred";
             tapping-term-ms = <TAPPING_TERM_MS>;
             quick-tap-ms = <QUICK_TAP_MS>;                // repeat on tap-into-hold
             require-prior-idle-ms = <PRIOR_IDLE_MS>;
@@ -156,12 +156,12 @@
             hold-trigger-on-release;             // delay positional check until key-release
         };              
     
-        socdh: socdh {
+        socdh: socdh{
             compatible = "zmk,behavior-socd";
             #binding-cells = <1>;
             bindings = <&kp>;
         };
-        socdv: socdv {
+        socdv: socdv{
             compatible = "zmk,behavior-socd";
             #binding-cells = <1>;
             bindings = <&kp>;

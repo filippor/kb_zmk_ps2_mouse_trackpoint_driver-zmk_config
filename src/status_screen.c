@@ -542,6 +542,8 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_set_style_pad_all(screen, 0, LV_PART_MAIN);
     lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
     lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+    // make_rule(screen, 0);
+    // make_rule(screen, CANVAS_H - 1);
 
     layer_label =
         make_label(screen, &lv_font_montserrat_12, 0, LAYER_Y, CANVAS_W, LV_TEXT_ALIGN_LEFT);
