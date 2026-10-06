@@ -1,0 +1,15 @@
+#define BASE      0
+#define WIN       1
+#define MAC       2
+#define GAME      3
+#define GAME_M    4
+#define NAVIG     5
+#define WINC      6
+#define MACC      7
+#define NUMBER    8
+#define SYMBOL    9
+#define MEDIA     10
+#define FUNCTION  11
+#define CONFIG    12
+#define MOUSE     13
+#define SCROLL_TP 14

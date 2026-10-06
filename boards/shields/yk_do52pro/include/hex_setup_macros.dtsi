@@ -1,0 +1,54 @@
+#include <dt-bindings/zmk/keys.h>
+
+/ {
+    macros {
+        enable_hex_mac: enable_hex_mac {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <15>;
+            tap-ms = <15>;
+             bindings
+                = <&kp D &kp E &kp F &kp A &kp U &kp L &kp T &kp S &kp SPACE &kp W &kp R &kp I>
+                , <&kp T &kp E &kp SPACE &kp C &kp O &kp M &kp DOT &kp A &kp P &kp P &kp L &kp E>
+                , <&kp DOT &kp LS(H) &kp LS(I) &kp LS(T) &kp O &kp O &kp L &kp B &kp O &kp X &kp SPACE &kp LS(A)>
+                , <&kp P &kp P &kp L &kp E &kp LS(E) &kp N &kp A &kp B &kp L &kp E &kp D &kp LS(I)>
+                , <&kp N &kp P &kp U &kp T &kp LS(S) &kp O &kp U &kp R &kp C &kp E &kp S &kp SPACE>
+                , <&kp MINUS &kp A &kp R &kp R &kp A &kp Y &kp MINUS &kp A &kp D &kp D &kp SPACE &kp SQT>
+                , <&kp LT &kp D &kp I &kp C &kp T &kp GT &kp LT &kp K &kp E &kp Y &kp GT &kp LS(I)>
+                , <&kp N &kp P &kp U &kp T &kp LS(S) &kp O &kp U &kp R &kp C &kp E &kp LS(K) &kp I>
+                , <&kp N &kp D &kp LT &kp FSLH &kp K &kp E &kp Y &kp GT &kp LT &kp S &kp T &kp R>
+                , <&kp I &kp N &kp G &kp GT &kp LS(K) &kp E &kp Y &kp B &kp O &kp A &kp R &kp D>
+                , <&kp SPACE &kp LS(L) &kp A &kp Y &kp O &kp U &kp T &kp LT &kp FSLH &kp S &kp T &kp R>
+                , <&kp I &kp N &kp G &kp GT &kp LT &kp K &kp E &kp Y &kp GT &kp LS(K) &kp E &kp Y>
+                , <&kp B &kp O &kp A &kp R &kp D &kp LS(L) &kp A &kp Y &kp O &kp U &kp T &kp SPACE>
+                , <&kp LS(I) &kp LS(D) &kp LT &kp FSLH &kp K &kp E &kp Y &kp GT &kp LT &kp I &kp N &kp T>
+                , <&kp E &kp G &kp E &kp R &kp GT &kp MINUS &kp N1 &kp LT &kp FSLH &kp I &kp N &kp T>
+                , <&kp E &kp G &kp E &kp R &kp GT &kp LT &kp K &kp E &kp Y &kp GT &kp LS(K) &kp E>
+                , <&kp Y &kp B &kp O &kp A &kp R &kp D &kp LS(L) &kp A &kp Y &kp O &kp U &kp T>
+                , <&kp SPACE &kp LS(N) &kp A &kp M &kp E &kp LT &kp FSLH &kp K &kp E &kp Y &kp GT &kp LT>
+                , <&kp S &kp T &kp R &kp I &kp N &kp G &kp GT &kp LS(U) &kp N &kp I &kp C &kp O>
+                , <&kp D &kp E &kp SPACE &kp LS(H) &kp E &kp X &kp SPACE &kp LS(I) &kp N &kp P &kp U &kp T>
+                , <&kp LT &kp FSLH &kp S &kp T &kp R &kp I &kp N &kp G &kp GT &kp LT &kp FSLH &kp D>
+                , <&kp I &kp C &kp T &kp GT &kp SQT>
+                ;
+        };
+
+        enable_hex_windows: enable_hex_windows {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <15>;
+            tap-ms = <15>;
+            bindings = <&macro_tap>,
+                <&kp R &kp E &kp G &kp SPACE &kp A &kp D &kp D &kp SPACE>,
+                <&kp LS(SQT) &kp LS(H) &kp LS(K) &kp LS(C) &kp LS(U) &kp BACKSLASH &kp LS(C) &kp O>,
+                <&kp N &kp T &kp R &kp O &kp L &kp SPACE &kp LS(P) &kp A>,
+                <&kp N &kp E &kp L &kp BACKSLASH &kp LS(I) &kp N &kp P &kp U>,
+                <&kp T &kp SPACE &kp LS(M) &kp E &kp T &kp H &kp O &kp D>,
+                <&kp LS(SQT) &kp SPACE &kp FSLH &kp V &kp SPACE &kp LS(E) &kp N &kp A>,
+                <&kp B &kp L &kp E &kp LS(H) &kp E &kp X &kp LS(N) &kp U>,
+                <&kp M &kp P &kp A &kp D &kp SPACE &kp FSLH &kp T &kp SPACE>,
+                <&kp LS(R) &kp LS(E) &kp LS(G) &kp LS(MINUS) &kp LS(S) &kp LS(Z) &kp SPACE &kp FSLH>,
+                <&kp D &kp SPACE &kp N1 &kp SPACE &kp FSLH &kp F>;
+        };
+    };
+};

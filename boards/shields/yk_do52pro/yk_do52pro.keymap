@@ -8,7 +8,8 @@
 #include <dt-bindings/zmk/keys.h>
 
 //#include "zmk-helpers/helper.h"
-#include "include/yk_do52_key.h"                                     
+#include "include/yk_do52_key.h"  
+#include "include/hex_setup_macros.dtsi"                                     
 
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/ext_power.h>
@@ -17,6 +18,7 @@
 //#include <behaviors/battery_percentage_printer.dtsi>
 #include <behaviors/socd.dtsi>
 #include <dt-bindings/zmk/dynamic_macros.h>
+#include "include/yk_do52pro_layers.dtsi"
 
 
 /*
@@ -32,17 +34,22 @@
 #define HAS_MOUSE_KEYS
 #define HAS_MOUSE_TP
 
-#define BASE      0
-#define GAME      1
-#define GAME_M    2
-#define NAVIG     3
-#define NUMBER    4
-#define SYMBOL    5
-#define MEDIA     6
-#define FUNCTION  7
-#define CONFIG    8
-#define MOUSE     9
-#define SCROLL_TP 10
+/ {
+    conditional_layers {
+        compatible = "zmk,conditional-layers";
+
+        windows_accent {
+            if-layers = <WIN NAVIG>;
+            then-layer = <WINC>;
+        };
+
+        macos_accent {
+            if-layers = <MAC NAVIG>;
+            then-layer = <MACC>;
+        };
+    };
+};
+
 
 #ifdef HAS_MOUSE_KEYS
   #include <dt-bindings/zmk/mouse.h>
@@ -86,6 +93,26 @@
 / {
    combos {
         compatible = "zmk,combos";
+        combo_win {
+            timeout-ms = <50>;
+            key-positions = <56 14>; // SYS and W
+            bindings = <&tog WIN>;
+        };
+        combo_mac {
+            timeout-ms = <50>;
+            key-positions = <56 43>; // SYS and M
+            bindings = <&tog MAC>;
+        };
+        combo_set_win {
+            timeout-ms = <50>;
+            key-positions = <57 56 14>; // RALT SYS and W
+            bindings = <&enable_hex_windows>;
+        };
+        combo_set_mac {
+            timeout-ms = <50>;
+            key-positions = <57 56 43>; // RALT SYS and M
+            bindings = <&enable_hex_mac>;
+        };
         combo_esc {
             timeout-ms = <50>;
             key-positions = <27 28>; // D and F
@@ -168,6 +195,77 @@
         };   
   };
   macros {
+       grave_linux: grave_linux {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings =
+                <&macro_press &kp LCTRL &kp LSHFT>,
+                <&macro_tap &kp U>,
+                <&macro_release &kp LSHFT &kp LCTRL>,
+                <&macro_tap &kp N0 &kp N3 &kp N0 &kp N0 &kp ENTER>;
+        };
+
+        grave_win: grave_win {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings =
+                <&macro_press &kp LALT>,
+                <&macro_tap &kp KP_PLUS
+                            &kp KP_N0 &kp KP_N3 &kp KP_N0 &kp KP_N0>,
+                <&macro_release &kp LALT>;
+        };
+
+        grave_mac: grave_mac {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings =
+                <&macro_press &kp LALT>,
+                <&macro_tap &kp N0 &kp N3 &kp N0 &kp N0>,
+                <&macro_release &kp LALT>;
+        };
+
+        acute_linux: acute_linux {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings =
+                <&macro_press &kp LCTRL &kp LSHFT>,
+                <&macro_tap &kp U>,
+                <&macro_release &kp LSHFT &kp LCTRL>,
+                <&macro_tap &kp N0 &kp N3 &kp N0 &kp N1 &kp ENTER>;
+        };
+
+        acute_win: acute_win {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings =
+                <&macro_press &kp LALT>,
+                <&macro_tap &kp KP_PLUS
+                            &kp KP_N0 &kp KP_N3 &kp KP_N0 &kp KP_N1>,
+                <&macro_release &kp LALT>;
+        };
+
+        acute_mac: acute_mac {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings =
+                <&macro_press &kp LALT>,
+                <&macro_tap &kp N0 &kp N3 &kp N0 &kp N1>,
+                <&macro_release &kp LALT>;
+        };
+        
+
         long_tap: long_tap {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -204,7 +302,41 @@
                                                                                     &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
       >;
     };
-//1
+
+ //1
+     Windows_layer {
+      display-name = "Win";
+      bindings = <
+//|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|---------------|---------------|------------|
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans                                &trans          &trans          &trans               &trans         &trans          &trans                                    &trans          &trans 
+                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
+                                                                                    &trans    &trans     &trans      &trans     &trans        //left
+                                                                                    &trans    &trans     &trans      &trans     &trans        //right                                                     
+      >;
+};
+
+//2
+     MacOS_layer {
+      display-name = "Mac";
+      bindings = <
+//|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|---------------|---------------|------------|
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans                                &trans          &trans          &trans               &trans     &trans          &trans                                    &trans          &trans 
+                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
+                                                                                    &trans    &trans     &trans      &trans     &trans        //left
+                                                                                    &trans    &trans     &trans      &trans     &trans        //right                                                     
+      >;
+};
+
+    
+//3
       Game_layer {
       display-name = "Game";
       bindings = <
@@ -219,7 +351,7 @@
                                                                                     &kp HOME  &kp PG_DN  &kp PSCRN   &kp PG_UP  &kp END       //right
       >;
     };
-//2
+//4
       GameMouse_layer {
       display-name = "GaMe";
       bindings = <
@@ -234,7 +366,7 @@
                                                                                     &kp HOME  &kp PG_DN  &kp INS     &kp PG_UP  &kp END       //right
       >;
     };
-//3
+//5
     Nav_layer {
       display-name = "Nav";
          bindings = <
@@ -249,7 +381,41 @@
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
       >;
     };
-//4
+
+//6
+     Windows_Accent {
+      display-name = "WinC";
+      bindings = <
+//|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|---------------|---------------|------------|
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &grave_win    &acute_win  &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans                                &trans          &trans          &trans               &trans         &trans          &trans                                    &trans          &trans 
+                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
+                                                                                    &trans    &trans     &trans      &trans     &trans        //left
+                                                                                    &trans    &trans     &trans      &trans     &trans        //right                                                     
+      >;
+};
+
+//7
+     Mac_Accent {
+      display-name = "MacC";
+      bindings = <
+//|------------|-------------|-----------|-----------|---------------|---------------|---------------|   |---------------|---------------|-------------|-----------|---------------|---------------|------------|
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &grave_mac    &acute_mac  &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans        &trans      &trans      &trans          &trans                                              &trans          &trans        &trans      &trans          &trans          &trans
+   &trans       &trans                                &trans          &trans          &trans               &trans         &trans          &trans                                    &trans          &trans 
+                                                                           // DPAD |Left,    |Down,     |Middle,    |Up,       |Right
+                                                                                    &trans    &trans     &trans      &trans     &trans        //left
+                                                                                    &trans    &trans     &trans      &trans     &trans        //right                                                     
+      >;
+};
+
+
+//8
     Num_layer {
       display-name = "Num";
         bindings = <
@@ -265,7 +431,7 @@
       >;
     };
 
-  //5
+//9
     Symb_layer {
       display-name = "Symb";
           bindings = <
@@ -280,7 +446,7 @@
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
       >;
     };
- //6
+//10
   Media_layer {
       display-name = "Media";
          bindings = <
@@ -296,7 +462,7 @@
       >;
     };
 
-//7
+//11
  Func_layer {
       display-name = "Funct";
       bindings = <
@@ -311,7 +477,7 @@
                                                                                     &trans    &trans     &trans      &trans     &trans        //right                                                     
       >;
     };
-//8
+//12
     Config_layer {
       display-name = "Confg";
       bindings = <
@@ -327,7 +493,7 @@
       >;
     };
 
-   //9
+//13
      Mouse_layerAuto {
       display-name = "Mouse";
       bindings = <
@@ -343,7 +509,7 @@
       >;
        };
 
-//10'
+//14
      Scroll_layer {
       display-name = "Scroll";
       bindings = <
